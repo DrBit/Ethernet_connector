@@ -34,14 +34,19 @@
 byte mac[] = { 
   0xDE, 0xAD, 0xCA, 0xEF, 0xFE,  byte(ID) };
 
-byte server [] = {  
+// Not needed when using DNS
+byte server_ipAddr [4] = {  
   // 209, 40, 205, 190		//www.pachube.com
   // 10,42,43,50			// Mybook (Intranet)
   // 8,8,8,8				// Google DNS server (Internet)
-  95,154,194,55				// personal server
+  // 95,154,194,55			// personal server
+  0,0,0,0					// Dummy
 };
 
-Client client(server, 80);
+Client client(server_ipAddr, 80);
+
+//Client client(server_ipAddr, 80);
+
 
 
 const char* ip_to_str(const uint8_t*);		// Format IP address
@@ -55,18 +60,31 @@ void setup()
 
 boolean executed = false;
 boolean received_data = false;
+boolean got_ip = false;
+boolean print_once = false;
+boolean connected = false;
+ 
 void loop()
 {
 	int dhcp_state = Ethernet_mantain_connection();
 	// if we receive an oder from the serial port
 	if (dhcp_state == 1) {// if we have obtained an IP address.. or we wait
-		// when we have an IP We execute order (only once)
-		if (!executed) {
-			if (Ethernet_open_connection ()) {  // Open connection
-				getResponse();
+		// when we have an IP We execute orders (one time only)
+		if (got_ip) {				// If we get IP from the name
+			client.server_ip(server_ipAddr);		// Refresh the IP addres to connect to
+			if (!executed) {						// If we didn got an answedr from the server yet
+				if (!connected) {
+					connected = Ethernet_open_connection ();
+				}else if (connected) {  // Open connection
+					getResponse();
+				}
 			}else{
-				//We didnt get a connection, try again?
+				stopEthernet();
+				// We already did what we needed to...
 			}
+		}else{
+			// If we havent get an IP we have to ask for one
+			get_ip_from_dns_name();		// Asks for a host and gets the IP addres trough DNS
 		}
 		// stopEthernet();
 		// Send GET information

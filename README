@@ -1,5 +1,5 @@
 /********************************************
-**  Name: Seed Counter 
+**  Name: Ethernet client with Dhcp and DNS support for Arduino Ethernet shield
 **  Created: 27/09/2011
 *********************************************
 **  REVISIONS
@@ -7,6 +7,11 @@
 **  V0.1 - 27/09/2011
 **	* First example working, successfuly receiving data from websites
 **  * Only via IP address
+**
+**  V0.2 - 27/09/2011
+**  * Sucessfully pharsing Host Names request trough DNS server
+**  * Implementing non blocking logic so arduino can refresh its IP when
+**	  expired lease occurs in the local DHCP server
 **
 *********************************************
 */
