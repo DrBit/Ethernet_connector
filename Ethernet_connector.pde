@@ -1,25 +1,4 @@
-//  Copyright (C) 2010 Georg Kaindl
-//  http://gkaindl.com
-//
-//  This file is part of Arduino EthernetDHCP.
-//
-//  EthernetDHCP is free software: you can redistribute it and/or modify
-//  it under the terms of the GNU Lesser General Public License as
-//  published by the Free Software Foundation, either version 3 of
-//  the License, or (at your option) any later version.
-//
-//  EthernetDHCP is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with EthernetDHCP. If not, see
-//  <http://www.gnu.org/licenses/>.
-//
 
-//  Illustrates how to use EthernetDHCP in polling (non-blocking)
-//  mode.
 
 #if defined(ARDUINO) && ARDUINO > 18
 #include <SPI.h>
@@ -36,7 +15,7 @@ byte mac[] = {
 
 // Not needed when using DNS
 byte server_ipAddr [4] = {  
-  // 209, 40, 205, 190		//www.pachube.com
+  // 209, 40, 205, 190		// www.pachube.com
   // 10,42,43,50			// Mybook (Intranet)
   // 8,8,8,8				// Google DNS server (Internet)
   // 95,154,194,55			// personal server
@@ -45,11 +24,9 @@ byte server_ipAddr [4] = {
 
 Client client(server_ipAddr, 80);
 
-//Client client(server_ipAddr, 80);
-
-
-
 const char* ip_to_str(const uint8_t*);		// Format IP address
+
+
 
 void setup()
 {
@@ -57,6 +34,8 @@ void setup()
 	Ethernet_setup();
 
 }
+
+
 
 boolean executed = false;
 boolean received_data = false;
