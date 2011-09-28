@@ -12,7 +12,7 @@ const int buffer = 70;
 char hostName[buffer];
 char hostAddress[buffer];
 char password[buffer];
-int printer_port;
+
 
 
 boolean print_state = 0;

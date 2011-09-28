@@ -31,6 +31,8 @@ byte printer_ipAddr [4] = {
   0,0,0,0					// Dummy
 };
 
+uint16_t printer_port;
+
 
 Client client(server_ipAddr, 80);
 
@@ -72,7 +74,7 @@ void loop()
 					generate_label ();
 					getResponse();
 					client.server_ip(printer_ipAddr);		// Change IP to the next client
-					// client.server_port(printer_port);		// Change port to the next client
+					client.server_port(printer_port);		// Change port to the next client
 					stopEthernet();
 					
 					// option 2

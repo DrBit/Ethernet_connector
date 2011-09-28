@@ -13,6 +13,7 @@ public:
   uint8_t status();
   uint8_t connect(); 
   void server_ip(uint8_t *ip);
+  void server_port(uint16_t port);		
   virtual void write(uint8_t);
   virtual void write(const char *str);
   virtual void write(const uint8_t *buf, size_t size);

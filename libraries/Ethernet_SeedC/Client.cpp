@@ -58,6 +58,10 @@ void Client::server_ip(uint8_t *ip) {
 	_ip = ip;
 }
 
+void Client::server_port(uint16_t port) {
+	_port = port;
+}
+
 void Client::write(uint8_t b) {
   if (_sock != MAX_SOCK_NUM)
     send(_sock, &b, 1);
