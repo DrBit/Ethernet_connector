@@ -44,7 +44,7 @@ void setup()
 {
 	Serial.begin(9600);
 	delay(200);
-	wait_for_host();
+	// wait_for_host();
 	get_configuration();
 	Ethernet_setup();
 }

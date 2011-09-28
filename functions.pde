@@ -433,36 +433,34 @@ void get_configuration () {
 			Serial.println (lastChar);
 			Serial.println ("-----");
 			
-			int multiplyer = 1;
-			int num = 0;
-			
-			for (int i = firstDot; i<0 ; i--) {
-				int num =+ atoi(&printerIP[i]) * multiplyer;
-				multiplyer = multiplyer * 10;
+
+			int num = 0;	
+			// when you cast the individual chars to ints you will get their ascii table equivalents 
+			// Since the ascii values of the digits 1-9 are off by 48 (0 is 48, 9 is 57), 
+			// you can correct by subtracting 48 when you cast your chars to ints.
+			for (int i = (firstDot-1); i>=0 ; i--) {
+				num = atoi(&printerIP[i]);
 			}
 			Serial.println (num);
 			printer_ipAddr[0] = (byte) num;
 			
-			multiplyer = 1;
-			for (int i = secondDot; i<(firstDot+1) ; i--) {
-				int num =+ atoi(&printerIP[i]) * multiplyer;
-				multiplyer = multiplyer * 10;
+			num = 0;
+			for (int i = (secondDot-1); i>=(firstDot+1) ; i--) {
+				num = atoi(&printerIP[i]);
 			}
 			Serial.println (num);
 			printer_ipAddr[1] = (byte) num;
 			
-			multiplyer = 1;
-			for (int i = thirdDot; i<(secondDot+1) ; i--) {
-				int num =+ atoi(&printerIP[i]) * multiplyer;
-				multiplyer = multiplyer * 10;
+			num = 0;
+			for (int i = (thirdDot-1); i>=(secondDot+1) ; i--) {
+				num = atoi(&printerIP[i]);
 			}
 			Serial.println (num);
 			printer_ipAddr[2] = (byte) num;
 			
-			multiplyer = 1;
-			for (int i = lastChar; i<(thirdDot+1) ; i--) {
-				int num =+ atoi(&printerIP[i]) * multiplyer;
-				multiplyer = multiplyer * 10;
+			num = 0;
+			for (int i = (lastChar-1); i>=(thirdDot+1) ; i--) {
+				num = atoi(&printerIP[i]);
 			}
 			Serial.println (num);
 			printer_ipAddr[3] = (byte) num;
@@ -471,14 +469,6 @@ void get_configuration () {
 			Serial.print ("IP: ");
 			Serial.println (ip_to_str(printer_ipAddr));
 			
-			
-			//thisChar = SprinterIP.substring((secondDot+1),thirdDot);
-			//printer_ipAddr[2] = atoi(thisChar);
-			
-			//thisChar = SprinterIP.substring(thirdDot+1);
-			//printer_ipAddr[3] = atoi(thisChar);
-	
-			// printer_ipAddr
 			IP = true;
 		}
 		
@@ -583,6 +573,62 @@ void wait_for_print_command () {
 		// we are in the preocess of printing
 		// check if ready
 	}
+}
+
+
+void convertIPtoInt () {
+/*
+	printerIP[length] = '\0';
+	String SprinterIP = printerIP;
+	// convert into -> byte printer_ipAddr[4]
+	// ip 10.11.12.13
+	int firstDot = SprinterIP.indexOf('.');
+	int secondDot = SprinterIP.indexOf('.', firstDot + 1 );
+	int thirdDot = SprinterIP.indexOf('.', secondDot + 1 );
+	int lastChar = SprinterIP.length();
+	//int firstdoubleDot = stringOne.indexOf(':');
+	Serial.println (firstDot);
+	Serial.println (secondDot);
+	Serial.println (thirdDot);
+	Serial.println (lastChar);
+	Serial.println ("-----");
+
+
+	int num = 0;	
+	// when you cast the individual chars to ints you will get their ascii table equivalents 
+	// Since the ascii values of the digits 1-9 are off by 48 (0 is 48, 9 is 57), 
+	// you can correct by subtracting 48 when you cast your chars to ints.
+	for (int i = (firstDot-1); i>=0 ; i--) {
+		num = atoi(&printerIP[i]);
+	}
+	Serial.println (num);
+	printer_ipAddr[0] = (byte) num;
+
+	num = 0;
+	for (int i = (secondDot-1); i>=(firstDot+1) ; i--) {
+		num = atoi(&printerIP[i]);
+	}
+	Serial.println (num);
+	printer_ipAddr[1] = (byte) num;
+
+	num = 0;
+	for (int i = (thirdDot-1); i>=(secondDot+1) ; i--) {
+		num = atoi(&printerIP[i]);
+	}
+	Serial.println (num);
+	printer_ipAddr[2] = (byte) num;
+
+	num = 0;
+	for (int i = (lastChar-1); i>=(thirdDot+1) ; i--) {
+		num = atoi(&printerIP[i]);
+	}
+	Serial.println (num);
+	printer_ipAddr[3] = (byte) num;
+
+
+	Serial.print ("IP: ");
+	Serial.println (ip_to_str(printer_ipAddr));
+*/
 }
 
 	

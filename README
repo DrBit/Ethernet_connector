@@ -4,6 +4,9 @@
 *********************************************
 **  REVISIONS
 **
+**  V0.5 - 28/09/2011
+**  * Fixed problem understanding IP addresses (TEXT based)
+**
 **  V0.4 - 28/09/2011
 **  * Added serial configuration from seed_counter
 **  * Added password functionality
