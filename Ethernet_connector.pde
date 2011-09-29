@@ -30,7 +30,7 @@ byte printer_ipAddr [4] = {
 
 // testing at home
 byte printer_ipAddr [4] = {  
-  192,168,178,100				// Local IP of the printer address
+  10,42,43,51				// Local IP of the printer address
 };
 
 
@@ -99,13 +99,14 @@ void loop()
 						}
 					}else if (connection_case == printLabel) {
 						print_label ();							// Send request to print the label
-						getResponse();							// get and processe response
-						if (got_response) {
+						// getResponse();	//Do we need answer?// get and processe response
+						//if (got_response) {
 							//if (printed) 
-								executed = true;		// Means we did all the process so we need to stop and wait again
+							executed = true;		// Means we did all the process so we need to stop and wait again
+							print_state = ready;	// Means we will request the server another print comand
 							stopEthernet();
-							got_response = false;									
-						}
+							//got_response = false;									
+						//}
 					}
 				}
 			}
