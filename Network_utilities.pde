@@ -1,52 +1,4 @@
-///////////////////////
-// NETWORK UTILITIES
-///////////////////////
 
-#define DEBUG_serial
-
-// #if defined DEBUG
-// Serial.println(val);
-// #endif
-
-
-////////////////////////
-// XML VARs & DEFINES
-////////////////////////
-
-//Defines
-#define max_tag_leng 18		// Max leng of tag
-#define max_data_leng 120		// Max leng of tag
-#define numberOfTags 1			// Define the number of tags we are gona use (remember last one is /0)
-
-//VARs
-char* myTagStrings[numberOfTags]={"<response>"};   // Array of tags
-char tagRec[max_tag_leng];		// Var containg the tag
-char dataRec[max_data_leng];	// Var containg the data  
-// int  Data_results[numberOfTags]={0, 0};
-int data_type = 0;				// Container to store the type of data acording to the tag
-
-//VARs for storing results
-char labelParameter[max_data_leng];
-
-// FLAGS
-boolean tag_mode =false;
-boolean data_mode = false;
-boolean inici = true;
-boolean got_match = false;
-
-////////////////////////
-// NET VARs & DEFINES
-////////////////////////
-
-int buffer_command = 3;
-const int buffer = 60;
-char hostName[buffer]= "office.pygmalion.nl";
-char hostAddress[buffer] = "/labelgenerator/generate.php?batch_id=290";
-
-
-boolean print_state = 0;
-#define ready 0
-#define printing 1
 
 void Ethernet_setup () {
 	// Initiate a DHCP session. The argument is the MAC (hardware) address that
@@ -335,7 +287,7 @@ void print_label () {
 	delay (5000);
 	// ready to rpint again
 	print_state = ready;
-	
+	connection_case = generateLabel;
 	#if defined DEBUG_serial
 	Serial.println("\nPrinter request sended!!");
 	#endif

@@ -9,7 +9,58 @@
 
 #define ID             1    //incase you have more than 1 unit on same network, just change the unit ID to other number
 
-#define _version "V0.6"
+#define _version "V0.7"
+
+///////////////////////
+// NETWORK UTILITIES
+///////////////////////
+
+#define DEBUG_serial
+
+// #if defined DEBUG
+// Serial.println(val);
+// #endif
+
+
+////////////////////////
+// XML VARs & DEFINES
+////////////////////////
+
+//Defines
+#define max_tag_leng 18		// Max leng of tag
+#define max_data_leng 120		// Max leng of tag
+#define numberOfTags 1			// Define the number of tags we are gona use (remember last one is /0)
+
+//VARs
+const char* myTagStrings[numberOfTags]={"<response>"};   // Array of tags
+char tagRec[max_tag_leng];		// Var containg the tag
+char dataRec[max_data_leng];	// Var containg the data  
+// int  Data_results[numberOfTags]={0, 0};
+int data_type = 0;				// Container to store the type of data acording to the tag
+
+//VARs for storing results
+char labelParameter[max_data_leng];
+
+// FLAGS
+boolean tag_mode =false;
+boolean data_mode = false;
+boolean inici = true;
+boolean got_match = false;
+
+////////////////////////
+// NETWORK VARs & DEFINES
+////////////////////////
+
+const int buffer_command = 3;
+const int buffer = 60;
+char hostName[buffer]= "office.pygmalion.nl";
+char hostAddress[buffer] = "/labelgenerator/generate.php?batch_id=290";
+char password[buffer] = "=";
+uint16_t printer_port = 8000;
+
+boolean print_state = 0;
+#define ready 0
+#define printing 1
 
 byte mac[] = { 
   0xDE, 0xAD, 0xCA, 0xEF, 0xFE,  byte(ID) };
@@ -30,11 +81,11 @@ byte printer_ipAddr [4] = {
 
 // testing at home
 byte printer_ipAddr [4] = {  
-  10,42,43,51				// Local IP of the printer address
+  10,42,43,13				// Local IP of the printer address
 };
 
 
-uint16_t printer_port = 8000;
+
 
 
 Client client(server_ipAddr, 80);
@@ -75,11 +126,13 @@ void loop()
 			if (connection_case == generateLabel) {
 				client.server_ip(server_ipAddr);		// Refresh the IP addres to connect to
 			}else{
-				#if defined DEBUG_serial
-				Serial.println("Change IP to printer");
-				#endif
-				client.server_ip(printer_ipAddr);		// Change IP to the next client
-				client.server_port(printer_port);		// Change port to the next client
+				if (!connected) {
+					#if defined DEBUG_serial
+					Serial.println("Change IP to printer");
+					#endif
+					client.server_ip(printer_ipAddr);		// Change IP to the next client
+					client.server_port(printer_port);		// Change port to the next client
+				}
 			}
 			if (!executed) {						// If we didn got an answedr from the server yet
 				if (!connected) {
@@ -99,14 +152,10 @@ void loop()
 						}
 					}else if (connection_case == printLabel) {
 						print_label ();							// Send request to print the label
-						// getResponse();	//Do we need answer?// get and processe response
-						//if (got_response) {
-							//if (printed) 
-							executed = true;		// Means we did all the process so we need to stop and wait again
-							print_state = ready;	// Means we will request the server another print comand
-							stopEthernet();
-							//got_response = false;									
-						//}
+						executed = true;		// Means we did all the process so we need to stop and wait again
+						print_state = ready;	// Means we will request the server another print comand
+						stopEthernet();
+						client.server_port(80);		// Change back the port to the default
 					}
 				}
 			}

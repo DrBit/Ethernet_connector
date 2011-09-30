@@ -4,6 +4,11 @@
 *********************************************
 **  REVISIONS
 **
+**  V0.7 - 30/09/2011
+**	* Fixed bug that would create a bhuffer overflow after some web requests
+**  * Fixed bug in which the server port was not reverted to 80 after printing at port 8000
+**  * Fixed bug permitting more than one request one after another
+**
 **  V0.6 - 29/09/2011
 **  * Added XML pharsing 
 **  * Printing working

@@ -51,14 +51,19 @@ void XML_pharser() {
 
 //Record data
 void record_data (char input, char* strgdata_Result ) {
-  strgdata_Result[strlen(strgdata_Result)]=input;
+  if (strlen(strgdata_Result)== max_data_leng ) {
+    //Serial.println (" Reached the data max lengh, we reset the tag" );
+    reset_data();
+  }else{
+    strgdata_Result[strlen(strgdata_Result)]=input;
+  }
 }
 
-void reset_tag() {    // Reset Tag String
+void reset_data() {    // Reset Data String
   //Clean string
-  int len = strlen(tagRec);
+  int len = strlen(dataRec);
   for (int c = 0; c < len; c++) {
-    tagRec[c] = 0;
+    dataRec[c] = 0;
   }
 }
 
@@ -69,6 +74,14 @@ void record_tag (char input, char* strgtag_Result ) {
     reset_tag();
   }else{
     strgtag_Result[strlen(strgtag_Result)]=input;
+  }
+}
+
+void reset_tag() {    // Reset Tag String
+  //Clean string
+  int len = strlen(tagRec);
+  for (int c = 0; c < len; c++) {
+    tagRec[c] = 0;
   }
 }
 
@@ -99,5 +112,11 @@ void process_data(char* data_in) {
 	received_data = true;
 	for (int a=0; a<max_data_leng; a++) {
 		labelParameter[a] = data_in[a];
+	}
+	
+	//Clean data
+	int len = strlen(data_in);
+	for (int c = 0; c < len; c++) {
+		data_in[c] = 0;
 	}
 }

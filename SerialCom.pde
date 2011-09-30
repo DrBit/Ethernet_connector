@@ -58,6 +58,7 @@ void wait_for_print_command () {
 				#endif
 				command_received = true;
 				print_state = printing;
+				executed = false;
 				
 			}else{
 				#if defined DEBUG_serial
