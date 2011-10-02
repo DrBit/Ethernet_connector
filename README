@@ -8,6 +8,7 @@
 **  * Added command driving trough serial interface
 **  * Fixed bug in which a wrong webiste address would hang the device.
 **  * Implemented error sending information trough serial messages
+**	* Fine tuned comunication protcol
 **
 **  V0.7 - 30/09/2011
 **	* Fixed bug that would create a buffer overflow after some web requests

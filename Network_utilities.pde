@@ -28,9 +28,12 @@ int Ethernet_mantain_connection() {
 	// you should call either of these two methods at least once within your
 	// loop() section, or you risk losing your DHCP lease when it expires!
 	DhcpState state = EthernetDHCP.poll();
-
+	
 	if (prevState != state) {
+	
+	#if defined DEBUG_serial
 	Serial.println();
+	#endif
 	
 		switch (state) {
 		  case DhcpStateDiscovering:
@@ -60,10 +63,8 @@ int Ethernet_mantain_connection() {
 			
 			#if defined DEBUG_serial
 			Serial.print("My IP address is ");
-			#endif
 			Serial.println(ip_to_str(ipAddr));
 			
-			#if defined DEBUG_serial
 			Serial.print("Gateway IP address is ");
 			Serial.println(ip_to_str(gatewayAddr));
 
@@ -86,7 +87,9 @@ int Ethernet_mantain_connection() {
 		}
 	} else if (state != DhcpStateLeased && millis() - prevTime > 300) {
 	 prevTime = millis();
+	 #if defined DEBUG_serial
 	 Serial.print('.'); 
+	 #endif
 	}
 
 	prevState = state;
@@ -133,9 +136,9 @@ void get_ip_from_dns_name() {
 			}
 		} while (DNSTryLater == err);
 	}
-
+	#if defined DEBUG_serial
 	Serial.println();
-
+	#endif
 	// Finally, we have a result. We're just handling the most common errors
 	// here (success, timed out, not found) and just print others as an
 	// integer. A full listing of possible errors codes is available in
@@ -196,7 +199,7 @@ boolean Ethernet_open_connection () {
 			send_error (00);			// Indicates the error type generateds
 			resetState ();				// Resets all variables in order to get to the beginin of the code.
 		}
-		delay (4000);
+		delay (2000);
 		return false;
 	}
 }
@@ -264,7 +267,7 @@ void getResponse(){
 	if (!client.connected()) {
 		#if defined DEBUG_serial
 		Serial.println("\nserver closed session.");
-		if (got_match) {
+		if (received_data) {
 			Serial.print("received data: ");
 			Serial.println(labelParameter);
 		}
@@ -272,7 +275,7 @@ void getResponse(){
 		got_response = true;
 	}
 		
-	if (!got_match) {			// We didnt got any data so won't go forth.. send error
+	if (!received_data) {			// We didnt got any data so won't go forth.. send error
 		send_command (00);			// Indicates function was not completed 
 		send_error (02);			// Indicates the error type generateds
 		resetState ();				// Resets all variables in order to get to the beginin of the code.

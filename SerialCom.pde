@@ -30,45 +30,8 @@ void wait_for_host () {
 	}
 }*/
 
-//////////////////////////
-// LIST OF COMMANDS
-//////////////////////////
-
-// All commands are begined and ended with a carriage '/0'
-// any received data failling to have '/0' at the begining anb at the end will be descarted.
-
-/*
-
-//RECEIVE
-
-C00 - FALSE 
-C01 - TRUE
-C02 - ERROR
-C03 - Configure network
-C04 - Begining of data stream
-C05 - End of data stream
-C06
 
 
-
-//SEND
-
-C00 - TRUE
-C01 - FALSE
-C02 - Send print command
-
-*/
-
-//////////////////////////
-// LIST OF POSSIBLE ERRORS
-//////////////////////////
-
-/*
-
-E00
-E01
-
-*/
 	
 #define endOfLine '*'
 	
@@ -80,7 +43,7 @@ E01
 char numberIndex = 0;
 #define command_digits 2
 char commandNumber[command_digits];
-boolean lookForCommand = false;
+boolean lookForLetter = false;
 boolean lookForNumber = false;
 boolean incomingCommand = false;
 boolean incomingError = false;
@@ -88,56 +51,62 @@ int commandNumberInt = 0;
 int errorNumberInt = 0;
 
 int receiveNextValidCommand () {
-	// is (data) ? dont receive any comand
-	while (!Serial.available()) { }	// Wait until we have incomming data
-	while (Serial.available()) {
-		char c = Serial.read();
-		
-		if (c == endOfLine) { 		// begining or end of command
-			//Serial.print ("-End of line detected-");
-			// In this case we check if we had previous data in the buffer and process it if necessary
-			// restart all and ready to receive a commmand
-			if (processCommand()) {	// we got a valid command!
-				//Serial.print ("-Process command-");
-				if (incomingCommand) {
-					//Serial.print (c);		// JUST for debug
-					return commandNumberInt;
-				}else if (incomingError) {
-					return errorNumberInt;
+
+	while (true) {
+		while (Serial.available()) {
+			char c = Serial.read();
+			//Serial.print (c);	// JUST for debug
+			
+			if (c == endOfLine) { 		// begining or end of command
+				//Serial.print ("-End of line detected-");
+				// In this case we check if we had previous data in the buffer and process it if necessary
+				// restart all and ready to receive a commmand
+				if (lookForNumber) {
+					lookForNumber = false;
+					if (processCommand()) {	// we got a valid command!
+						//Serial.print ("-Process command-");						
+						if (incomingCommand) {
+							reset_command ();
+							return commandNumberInt;
+						}else if (incomingError) {
+							reset_command ();
+							return errorNumberInt;
+						}
+						
+					}else{
+						// failed to process comand
+					}
 				}
-				reset_command ();
-			}else{
-				lookForCommand = true;
+				
+				lookForLetter = true;
+				numberIndex = 0;
 			}
-			numberIndex = 0;
-		}
-		
-		if (lookForCommand && (c == 'C')) {
-			//Serial.print ("-C detected-");
-			// we got an incoming comand, start receive command number
-			lookForNumber = true;
-			incomingCommand = true;
-			incomingError = false;
-			lookForCommand = false;
-		}else if (lookForCommand && (c == 'E')) {
-			//Serial.print ("-E detected-");
-			// we got an incoming error, start receive error number
-			lookForNumber = true;
-			incomingError = true;
-			incomingCommand = false;
-			lookForCommand = false;
-		}else if (lookForNumber) {
-			//Serial.print ("-Number-");
-			// We look for the command number
-			commandNumber[numberIndex] = c;
-			if (numberIndex == command_digits) { 
-				reset_command ();	// Command invalid too many characters
+			
+			if (lookForLetter && (c == 'C')) {
+				//Serial.print ("-C detected-");
+				// we got an incoming comand, start receive command number
+				lookForNumber = true;
+				incomingCommand = true;
+				incomingError = false;
+				lookForLetter = false;
+			}else if (lookForLetter && (c == 'E')) {
+				//Serial.print ("-E detected-");
+				// we got an incoming error, start receive error number
+				lookForNumber = true;
+				incomingError = true;
+				incomingCommand = false;
+				lookForLetter = false;
+			}else if (lookForNumber) {
+				//Serial.print ("-Number-");
+				// We look for the command number
+				commandNumber[numberIndex] = c;
+				if (numberIndex == command_digits) { 
+					reset_command ();	// Command invalid too many characters
+				}
+				numberIndex++;
 			}
-			numberIndex++;
+			//delay (100);		// just give enough time to receive another character if 
 		}
-		
-		//Serial.print (c);	// JUST for debug
-		delay (100);		// just give enough time to receive another character if 
 	}
 }
 
@@ -175,7 +144,6 @@ boolean processCommand () {
 		//Serial.println ("-not expectig command-");
 		return false;
 	}
-	
 }
 
 void reset_command () {				// whenever data validation fails we reset all
@@ -183,7 +151,7 @@ void reset_command () {				// whenever data validation fails we reset all
 	lookForNumber = false;
 	incomingCommand = false;
 	incomingError = false;
-	lookForCommand = false;
+	lookForLetter = false;
 }
 
 
@@ -203,7 +171,7 @@ bool recevie_data () {
 
 
 bool send_command (unsigned int command) {
-	delay (300);
+	//delay (300);
 	Serial.print(endOfLine);	// Print begining command
 	Serial.print("C");
 	// We need to send in form of two digits like (01)
@@ -211,12 +179,12 @@ bool send_command (unsigned int command) {
 		Serial.print('0');
 	}
 	Serial.print(command);
-	Serial.println(endOfLine);	// Print end command
-	delay(300);
+	Serial.print(endOfLine);	// Print end command
+	//delay(300);
 }
 
 bool send_error (unsigned int command) {
-	delay (300);
+	//delay (300);
 	Serial.print(endOfLine);	// Print begining command
 	Serial.print("E");
 	// We need to send in form of two digits like (01)
@@ -224,8 +192,8 @@ bool send_error (unsigned int command) {
 		Serial.print('0');
 	}
 	Serial.print(command);
-	Serial.println(endOfLine);	// Print end command
-	delay(300);
+	Serial.print(endOfLine);	// Print end command
+	//delay(300);
 }
 
 
@@ -246,7 +214,7 @@ void wait_for_print_command () {
 		Serial.println("Waiting for print label command (C04)");
 		#endif
 		
-		boolean command_received= false;
+		boolean command_received = false;
 		while (!command_received) {
 			int last_command_received = receiveNextValidCommand();
 			if (last_command_received == 04) {				// Petition of configuration all correct.
@@ -325,13 +293,13 @@ void get_configuration () {
 	PP: 8000
 	SA || !SS || !IP || !PS || !PP
 	*/
-	#if defined DEBUG_serial
-	SA = true;
-	SS = true;
-	IP = true;
-	PS = true;
-	PP = true;
-	#endif
+	if (true) {		// just testing...
+		SA = true;
+		SS = true;
+		IP = true;
+		PS = true;
+		PP = true;
+	}
 	// Check if we finished configuring
 	while (!SA || !SS || !IP || !PS || !PP)  {
 		#if defined DEBUG_serial

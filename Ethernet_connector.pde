@@ -15,7 +15,7 @@
 // NETWORK UTILITIES
 ///////////////////////
 
-#define DEBUG_serial
+// #define DEBUG_serial
 
 // #if defined DEBUG
 // Serial.println(val);
@@ -55,7 +55,7 @@ const int buffer_command = 3;
 const int buffer = 60;
 char hostName[buffer]= "office.pygmalion.nl";
 char hostAddress[buffer] = "/labelgenerator/generate.php?batch_id=290";
-char password[buffer] = "=";
+char password[buffer] = "";
 uint16_t printer_port = 8000;
 
 boolean print_state = 0;
@@ -119,26 +119,26 @@ void loop()
 {
 	int dhcp_state = Ethernet_mantain_connection();
 	// if we receive an oder from the serial port
-	if (dhcp_state == 1) {// if we have obtained an IP address..
+	if (dhcp_state == 1) {				// if we have obtained an IP address..
 		// when we have an IP We execute orders (one time only)
-		wait_for_print_command ();	// Wait until the counter sends us the command to print a label
-		if (got_ip) {				// If we get IP from the name
+		wait_for_print_command ();		// Wait until the counter sends us the command to print a label
+		if (got_ip) {					// If we get IP from the name
 			if (connection_case == generateLabel) {
 				#if defined DEBUG_serial
 				Serial.println("Set IP and port to pygmalion server");
 				#endif
 				client.server_ip(server_ipAddr);		// Refresh the IP addres to connect to
-				client.server_port(80);		// Change back the port to the default
+				client.server_port(80);					// Change back the port to the default
 			}else{
 				if (!connected) {
 					#if defined DEBUG_serial
 					Serial.println("Set IP and port to printer host");
 					#endif
-					client.server_ip(printer_ipAddr);		// Change IP to the next client
-					client.server_port(printer_port);		// Change port to the next client
+					client.server_ip(printer_ipAddr);			// Change IP to the next client
+					client.server_port(printer_port);			// Change port to the next client
 				}
 			}
-			if (!executed) {						// If we didn got an answedr from the server yet
+			if (!executed) {									// If we didn got an answedr from the server yet
 				if (!connected) {
 					connected = Ethernet_open_connection ();
 				}else if (connected) {  // Open connection
@@ -147,16 +147,17 @@ void loop()
 						generate_label ();						// Send request to generate label
 						getResponse();							// get and processe response
 						if (got_response) {
-							connection_case = printLabel;			// Change the mode so next time we have a connection we will print
+							connection_case = printLabel;		// Change the mode so next time we have a connection we will print
 							stopEthernet();
 							got_response = false;
 							#if defined DEBUG_serial
 							mem_check ();
 							#endif
+							received_data = false;				// Reset flag so its secure now that we already process every thing
 						}
 					}else if (connection_case == printLabel) {
 						print_label ();							// Send request to print the label
-						send_command (01);						// Completed successfully
+						send_command (06);						// Completed successfully
 						connection_case = generateLabel;
 						executed = true;		// Means we did all the process so we need to stop and wait again
 						print_state = ready;	// Means we will request the server another print comand

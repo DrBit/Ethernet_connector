@@ -92,6 +92,7 @@ void process_tag(char* tag_in) {
     if (!strcmp(tag_in,myTagStrings[i])) {  // If we have a match...
       data_type = i;                        // We store the type of match
       got_match = true;                     // We rise the flag
+	  received_data = true;					// Flag for the outside code know we got a match (this wont be reset inside XML handler)
     }
   }
   // If one maches it will continu
@@ -109,7 +110,7 @@ void process_tag(char* tag_in) {
 
 // Process data gathered
 void process_data(char* data_in) {
-	received_data = true;
+
 	for (int a=0; a<max_data_leng; a++) {
 		labelParameter[a] = data_in[a];
 	}
