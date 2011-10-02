@@ -2,6 +2,7 @@
 // COMMUNICATION FUNCTIONS
 //////////////////////////////
 
+/*
 void wait_for_host () {
 	#if defined DEBUG_serial
 	Serial.println("Waiting for host (IN command)");
@@ -27,19 +28,246 @@ void wait_for_host () {
 		Serial.println(command);
 		#endif
 	}
+}*/
+
+//////////////////////////
+// LIST OF COMMANDS
+//////////////////////////
+
+// All commands are begined and ended with a carriage '/0'
+// any received data failling to have '/0' at the begining anb at the end will be descarted.
+
+/*
+
+//RECEIVE
+
+C00 - FALSE 
+C01 - TRUE
+C02 - ERROR
+C03 - Configure network
+C04 - Begining of data stream
+C05 - End of data stream
+C06
+
+
+
+//SEND
+
+C00 - TRUE
+C01 - FALSE
+C02 - Send print command
+
+*/
+
+//////////////////////////
+// LIST OF POSSIBLE ERRORS
+//////////////////////////
+
+/*
+
+E00
+E01
+
+*/
+	
+#define endOfLine '*'
+	
+//////////////////////////
+// Receive Command
+//////////////////////////
+#define number_of_commands 10
+#define number_of_errors 10
+char numberIndex = 0;
+#define command_digits 2
+char commandNumber[command_digits];
+boolean lookForCommand = false;
+boolean lookForNumber = false;
+boolean incomingCommand = false;
+boolean incomingError = false;
+int commandNumberInt = 0;
+int errorNumberInt = 0;
+
+int receiveNextValidCommand () {
+	// is (data) ? dont receive any comand
+	while (!Serial.available()) { }	// Wait until we have incomming data
+	while (Serial.available()) {
+		char c = Serial.read();
+		
+		if (c == endOfLine) { 		// begining or end of command
+			//Serial.print ("-End of line detected-");
+			// In this case we check if we had previous data in the buffer and process it if necessary
+			// restart all and ready to receive a commmand
+			if (processCommand()) {	// we got a valid command!
+				//Serial.print ("-Process command-");
+				if (incomingCommand) {
+					//Serial.print (c);		// JUST for debug
+					return commandNumberInt;
+				}else if (incomingError) {
+					return errorNumberInt;
+				}
+				reset_command ();
+			}else{
+				lookForCommand = true;
+			}
+			numberIndex = 0;
+		}
+		
+		if (lookForCommand && (c == 'C')) {
+			//Serial.print ("-C detected-");
+			// we got an incoming comand, start receive command number
+			lookForNumber = true;
+			incomingCommand = true;
+			incomingError = false;
+			lookForCommand = false;
+		}else if (lookForCommand && (c == 'E')) {
+			//Serial.print ("-E detected-");
+			// we got an incoming error, start receive error number
+			lookForNumber = true;
+			incomingError = true;
+			incomingCommand = false;
+			lookForCommand = false;
+		}else if (lookForNumber) {
+			//Serial.print ("-Number-");
+			// We look for the command number
+			commandNumber[numberIndex] = c;
+			if (numberIndex == command_digits) { 
+				reset_command ();	// Command invalid too many characters
+			}
+			numberIndex++;
+		}
+		
+		//Serial.print (c);	// JUST for debug
+		delay (100);		// just give enough time to receive another character if 
+	}
 }
 
 
+boolean processCommand () {
+	//Serial.print ("-P-");
+	if (incomingCommand) {
+		// convert commandNumber
+		//Serial.print ("-Incoming-");
+		for (int i = (command_digits -1) ; i >= 0; i--) {
+			commandNumberInt = atoi(&commandNumber[i]);		// Transform received string into integuer
+			// Serial.println ("");
+			// Serial.println (commandNumberInt);
+		}
+		// is valid?
+		if ((commandNumberInt >= 0) && (commandNumberInt <= number_of_commands)) { 
+			//Serial.print ("VALID");
+			return true;
+		}else {		
+			//Serial.print ("NVALID");
+			return false;
+		}
+	} else if (incomingError) {
+	    for (int i = (command_digits -1) ; i >= 0; i--) {
+			errorNumberInt = atoi(&commandNumber[i]);		// Transform received string into integuer
+		}
+		// is valid?
+		if ((errorNumberInt >= 0) && (errorNumberInt <= number_of_errors)) { 
+			return true;
+		}else {		
+			return false;
+		}
+	} else {
+		// command not valid
+		//Serial.println ("-not expectig command-");
+		return false;
+	}
+	
+}
+
+void reset_command () {				// whenever data validation fails we reset all
+	numberIndex = 0;
+	lookForNumber = false;
+	incomingCommand = false;
+	incomingError = false;
+	lookForCommand = false;
+}
+
+
+
+bool recevie_data () {
+
+// receive
+// print
+// until C4 is received
+
+}
+
+//////////////////////////
+// Send Command
+//////////////////////////
+
+
+
+bool send_command (unsigned int command) {
+	delay (300);
+	Serial.print(endOfLine);	// Print begining command
+	Serial.print("C");
+	// We need to send in form of two digits like (01)
+	if (command < 10) {
+		Serial.print('0');
+	}
+	Serial.print(command);
+	Serial.println(endOfLine);	// Print end command
+	delay(300);
+}
+
+bool send_error (unsigned int command) {
+	delay (300);
+	Serial.print(endOfLine);	// Print begining command
+	Serial.print("E");
+	// We need to send in form of two digits like (01)
+	if (command < 10) {
+		Serial.print('0');
+	}
+	Serial.print(command);
+	Serial.println(endOfLine);	// Print end command
+	delay(300);
+}
+
+
+void send_data () {
+
+
+}
+
+//////////////////////////
+// Common functions
+//////////////////////////
+
 void wait_for_print_command () {
 	if (print_state == ready) {
-		Serial.println("1"); 			// send arduino a confirmation , we are ready to print
-		delay (300);
 		
 		#if defined DEBUG_serial
 		Serial.println("Network ready!"); 
-		Serial.println("Waiting for print command (PR)");
+		Serial.println("Waiting for print label command (C04)");
 		#endif
 		
+		boolean command_received= false;
+		while (!command_received) {
+			int last_command_received = receiveNextValidCommand();
+			if (last_command_received == 04) {				// Petition of configuration all correct.
+				send_command (01);
+				#if defined DEBUG_serial
+				Serial.println ("Starting process print label ");
+				#endif
+				command_received = true;
+				print_state = printing;
+				executed = false;
+			} else {		// Not the command we are expecting, wait for the good comand
+				// send error, (not expected command); (E10)
+				#if defined DEBUG_serial
+				Serial.print("NOT *C04* command: ");
+				Serial.println(last_command_received);
+				#endif
+			}
+		}
+		
+		
+		/*
 		boolean command_received= false;
 		while (!command_received) {
 			char command[buffer_command];
@@ -66,11 +294,8 @@ void wait_for_print_command () {
 				Serial.println(command);
 				#endif
 			}
-		}
+		}*/
 		
-		#if defined DEBUG_serial
-		Serial.println("Ready to connect!"); 
-		#endif
 	}else{
 		// we are in the preocess of printing
 		// check if ready
@@ -78,6 +303,9 @@ void wait_for_print_command () {
 }
 
 void get_configuration () {
+
+	send_command (05);		// To indicate we are ready to start
+	
 	boolean SA = false;		// server_address (host name)
 	boolean SS = false;		// server_script (Host Address)
 	boolean IP = false;		// printer_IP

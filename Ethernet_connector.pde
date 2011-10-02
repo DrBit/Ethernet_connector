@@ -9,7 +9,7 @@
 
 #define ID             1    //incase you have more than 1 unit on same network, just change the unit ID to other number
 
-#define _version "V0.7"
+#define _version "V0.8"
 
 ///////////////////////
 // NETWORK UTILITIES
@@ -55,7 +55,7 @@ const int buffer_command = 3;
 const int buffer = 60;
 char hostName[buffer]= "office.pygmalion.nl";
 char hostAddress[buffer] = "/labelgenerator/generate.php?batch_id=290";
-char password[buffer] = "=";
+char password[buffer] = "YXJkdWlubzpQQXBhWXViQTMzd3I=";
 uint16_t printer_port = 8000;
 
 boolean print_state = 0;
@@ -124,11 +124,15 @@ void loop()
 		wait_for_print_command ();	// Wait until the counter sends us the command to print a label
 		if (got_ip) {				// If we get IP from the name
 			if (connection_case == generateLabel) {
+				#if defined DEBUG_serial
+				Serial.println("Set IP and port to pygmalion server");
+				#endif
 				client.server_ip(server_ipAddr);		// Refresh the IP addres to connect to
+				client.server_port(80);		// Change back the port to the default
 			}else{
 				if (!connected) {
 					#if defined DEBUG_serial
-					Serial.println("Change IP to printer");
+					Serial.println("Set IP and port to printer host");
 					#endif
 					client.server_ip(printer_ipAddr);		// Change IP to the next client
 					client.server_port(printer_port);		// Change port to the next client
@@ -155,7 +159,6 @@ void loop()
 						executed = true;		// Means we did all the process so we need to stop and wait again
 						print_state = ready;	// Means we will request the server another print comand
 						stopEthernet();
-						client.server_port(80);		// Change back the port to the default
 					}
 				}
 			}

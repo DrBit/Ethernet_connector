@@ -192,10 +192,21 @@ boolean Ethernet_open_connection () {
 		if (retris > number_of_retris) {
 			stopEthernet();
 			retris = 0;
-			// SEND ERROR TO ARDUINO
+			send_command (00);			// Indicates function was not completed 
+			send_error (00);			// Indicates the error type generateds
+			resetState ();				// Resets all variables in order to get to the beginin of the code.
 		}
+		delay (4000);
 		return false;
 	}
+}
+
+void resetState () {
+	connected = false;
+	executed =  false;
+	connection_case = generateLabel;
+	got_ip= false;
+	print_state = ready;
 }
 
 
