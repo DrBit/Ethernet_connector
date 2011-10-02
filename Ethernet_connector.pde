@@ -55,7 +55,7 @@ const int buffer_command = 3;
 const int buffer = 60;
 char hostName[buffer]= "office.pygmalion.nl";
 char hostAddress[buffer] = "/labelgenerator/generate.php?batch_id=290";
-char password[buffer] = "YXJkdWlubzpQQXBhWXViQTMzd3I=";
+char password[buffer] = "=";
 uint16_t printer_port = 8000;
 
 boolean print_state = 0;
@@ -156,6 +156,8 @@ void loop()
 						}
 					}else if (connection_case == printLabel) {
 						print_label ();							// Send request to print the label
+						send_command (01);						// Completed successfully
+						connection_case = generateLabel;
 						executed = true;		// Means we did all the process so we need to stop and wait again
 						print_state = ready;	// Means we will request the server another print comand
 						stopEthernet();

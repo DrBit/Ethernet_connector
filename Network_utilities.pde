@@ -246,6 +246,9 @@ void getResponse(){
 			#if defined DEBUG_serial
 			Serial.print("\nTime Out!");
 			#endif
+			send_command (00);			// Indicates function was not completed 
+			send_error (01);			// Indicates the error type generateds
+			resetState ();				// Resets all variables in order to get to the beginin of the code.
 			break;
 		}
 	}
@@ -261,10 +264,18 @@ void getResponse(){
 	if (!client.connected()) {
 		#if defined DEBUG_serial
 		Serial.println("\nserver closed session.");
-		Serial.print("received data: ");
-		Serial.println(labelParameter);
+		if (got_match) {
+			Serial.print("received data: ");
+			Serial.println(labelParameter);
+		}
 		#endif
 		got_response = true;
+	}
+		
+	if (!got_match) {			// We didnt got any data so won't go forth.. send error
+		send_command (00);			// Indicates function was not completed 
+		send_error (02);			// Indicates the error type generateds
+		resetState ();				// Resets all variables in order to get to the beginin of the code.
 	}
 }
 
@@ -285,20 +296,7 @@ void print_label () {
 	client.println("");
 	
 	delay (100);
-	/*
-	// if the server's disconnected, stop the client:
-	if (!client.connected()) {
-		#if defined DEBUG_serial
-		Serial.println("server disconnected.");
-		#endif
-		if (received_data) executed = true;
-		//request_print_label ();
-	}*/
 	
-	delay (5000);
-	// ready to rpint again
-	print_state = ready;
-	connection_case = generateLabel;
 	#if defined DEBUG_serial
 	Serial.println("\nPrinter request sended!!");
 	#endif
