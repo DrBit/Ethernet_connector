@@ -4,6 +4,9 @@
 *********************************************
 **  REVISIONS
 **
+**  V0.9 - 3/10/2011
+**  * Fine tunning, production ready. WORKS!
+**
 **  V0.8 - 2/10/2011
 **  * Added command driving trough serial interface
 **  * Fixed bug in which a wrong webiste address would hang the device.

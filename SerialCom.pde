@@ -115,7 +115,7 @@ boolean processCommand () {
 	//Serial.print ("-P-");
 	if (incomingCommand) {
 		// convert commandNumber
-		//Serial.print ("-Incoming-");
+		// Serial.print ("-Incoming-");
 		for (int i = (command_digits -1) ; i >= 0; i--) {
 			commandNumberInt = atoi(&commandNumber[i]);		// Transform received string into integuer
 			// Serial.println ("");
@@ -470,6 +470,6 @@ void get_configuration () {
 	Serial.println (password);
 	Serial.print ("PP: ");
 	Serial.println (printer_port);
-	delay (300);
+	// delay (300);
 	#endif
 }

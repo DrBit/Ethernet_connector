@@ -9,7 +9,7 @@
 
 #define ID             1    //incase you have more than 1 unit on same network, just change the unit ID to other number
 
-#define _version "V0.8"
+#define _version "V0.9"
 
 ///////////////////////
 // NETWORK UTILITIES
@@ -52,10 +52,10 @@ boolean got_match = false;
 ////////////////////////
 
 const int buffer_command = 3;
-const int buffer = 60;
-char hostName[buffer]= "office.pygmalion.nl";
-char hostAddress[buffer] = "/labelgenerator/generate.php?batch_id=290";
-char password[buffer] = "";
+const int buffer = 48;
+char hostName[20]= "office.pygmalion.nl";
+char hostAddress[buffer] = "/labelgenerator/generate.php?batch_id=565";
+char password[30] = "";
 uint16_t printer_port = 8000;
 
 boolean print_state = 0;
@@ -81,7 +81,8 @@ byte printer_ipAddr [4] = {
 
 // testing at home
 byte printer_ipAddr [4] = {  
-  10,42,43,13				// Local IP of the printer address
+  //10,42,43,13				// Local IP of the printer address (Home)
+  10,10,249,116				// Local IP of the printer address (Haarlem)
 };
 
 
