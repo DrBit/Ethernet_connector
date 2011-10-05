@@ -35,6 +35,7 @@
 const char* myTagStrings[numberOfTags]={"<response>"};   // Array of tags
 char tagRec[max_tag_leng];		// Var containg the tag
 char dataRec[max_data_leng];	// Var containg the data  
+
 // int  Data_results[numberOfTags]={0, 0};
 int data_type = 0;				// Container to store the type of data acording to the tag
 
@@ -52,11 +53,14 @@ boolean got_match = false;
 ////////////////////////
 
 const int buffer_command = 3;
+const int buffer_batch = 4;
 const int buffer = 48;
-char hostName[20]= "office.pygmalion.nl";
-char hostAddress[buffer] = "/labelgenerator/generate.php?batch_id=565";
-char password[30] = "";
+const int bufferShort = 30;
+char hostName[bufferShort]= "office.pygmalion.nl";
+char hostAddress[buffer] = "/labelgenerator/generate.php?batch_id=";
+char password[bufferShort] = "YXJkdWlubzpQQXBhWXViQTMzd3I=";
 uint16_t printer_port = 8000;
+char seeds_batch[buffer_batch] = "600";
 
 boolean print_state = 0;
 #define ready 0

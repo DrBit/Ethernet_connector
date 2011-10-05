@@ -217,6 +217,7 @@ void generate_label () {
 
 	client.print("GET ");
 	client.print(hostAddress);
+	client.print(seeds_batch);
 	client.println(" HTTP/1.0");
 	
 	client.print("Authorization: Basic ");
