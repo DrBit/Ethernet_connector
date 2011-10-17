@@ -4,8 +4,9 @@
 *********************************************
 **  REVISIONS
 **
-**  V0.10
+**  V0.10 - 17/10/2011
 **  * Added config process
+**  * Tested config OK, still IP weird problem to solve
 **
 **  V0.9 - 3/10/2011
 **  * Fine tunning, production ready. WORKS!

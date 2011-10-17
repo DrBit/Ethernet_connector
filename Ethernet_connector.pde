@@ -9,7 +9,7 @@
 
 #define ID             1    //incase you have more than 1 unit on same network, just change the unit ID to other number
 
-#define _version "V0.9"
+#define _version "V0.10"
 
 ///////////////////////
 // NETWORK UTILITIES
@@ -55,7 +55,7 @@ boolean got_match = false;
 const int buffer_command = 3;
 const int buffer_batch = 4;
 const int buffer = 48;
-const int bufferShort = 30;
+const int bufferShort = 31;
 char hostName[bufferShort]= "office.pygmalion.nl";
 char hostAddress[buffer] = "/labelgenerator/generate.php?batch_id=";
 char password[bufferShort] = "YXJkdWlubzpQQXBhWXViQTMzd3I=";
@@ -103,7 +103,8 @@ void setup()
 {
 	Serial.begin(9600);
 	delay(200);
-	// wait_for_host();
+	mem_check ();
+	indicate_we_are_ready();
 	get_configuration();
 	Ethernet_setup();
 }
@@ -126,6 +127,7 @@ void loop()
 	// if we receive an oder from the serial port
 	if (dhcp_state == 1) {				// if we have obtained an IP address..
 		// when we have an IP We execute orders (one time only)
+		//mem_check ();
 		wait_for_print_command ();		// Wait until the counter sends us the command to print a label
 		if (got_ip) {					// If we get IP from the name
 			if (connection_case == generateLabel) {
