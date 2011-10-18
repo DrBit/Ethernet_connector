@@ -4,6 +4,9 @@
 *********************************************
 **  REVISIONS
 **
+**  V1.0 - 18/10/2011
+**  * READY for production
+**
 **  V0.11 - 18/10/2011
 **  * Fixed bug in hostIP where an uninitialized variable could corrupt data received from serial port.
 **
