@@ -4,6 +4,9 @@
 *********************************************
 **  REVISIONS
 **
+**  V0.11 - 18/10/2011
+**  * Fixed bug in hostIP where an uninitialized variable could corrupt data received from serial port.
+**
 **  V0.10 - 17/10/2011
 **  * Added config process
 **  * Tested config OK, still IP weird problem to solve

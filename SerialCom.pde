@@ -24,7 +24,7 @@ int receiveNextValidCommand () {
 
 	while (true) {
 		while (Serial.available()) {
-			char c = Serial.read();
+			char c = (char) Serial.read();
 			//Serial.print (c);	// JUST for debug
 			
 			if (c == endOfLine) { 		// begining or end of command
@@ -149,7 +149,6 @@ boolean processCommand () {
 }
 
 
-
 void reset_command () {				// whenever data validation fails we reset all
 	numberIndex = 0;
 	lookForNumber = false;
@@ -159,29 +158,19 @@ void reset_command () {				// whenever data validation fails we reset all
 }
 
 
-/*
-//Record data
-void record_data (char input, char* strgdata_Result ) {
-  if (strlen(strgdata_Result)== max_data_leng ) {
-    //Serial.println (" Reached the data max lengh, we reset the tag" );
-    reset_data();
-  }else{
-    strgdata_Result[strlen(strgdata_Result)]=input;
-  }
-}
-*/
-
 boolean recevie_data (char* parameter_container,int buffer) {
+	
 	// first clean data
-	int len = strlen(parameter_container);
+	int len = buffer;
 	for (int c = 0; c < len; c++) {
 		parameter_container[c] = 0;
 	}
 
 	while (true) {
 		while (Serial.available()) {
-			char c = Serial.read();
-			//Serial.print (c);	// JUST for debug
+			char c = (char) Serial.read();
+			
+			//Serial.print (Serial.read());	// JUST for debug
 			
 			if (c == endOfLine) { 		// begining or end of command
 				//Serial.print ("-End of line detected-");
@@ -229,12 +218,11 @@ boolean recevie_data (char* parameter_container,int buffer) {
 					return false;
 				}else{
 					// DATA comes here
+					// Serial.print (c);
 					parameter_container[strlen(parameter_container)]=c;
+					// DEBUG IP
 				}
 			}
-			
-
-			//delay (100);		// just give enough time to receive another character if 
 		}
 	}
 }
@@ -242,8 +230,6 @@ boolean recevie_data (char* parameter_container,int buffer) {
 //////////////////////////
 // Send
 //////////////////////////
-
-
 
 bool send_command (unsigned int command) {
 	//delay (300);
@@ -464,7 +450,7 @@ void receive_printer_port () {
 }
 
 void receive_printer_IP () {
-	int buf_ip =17;		// 17 is the maximum numbers an IP can contain (including dots) 
+	int buf_ip =17;				// 17 is the maximum numbers an IP can contain (including dots) 
 	char printerIP[buf_ip];		
 	recevie_data (printerIP,buf_ip);
 	Serial.println (printerIP);
