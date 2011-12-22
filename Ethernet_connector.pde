@@ -10,7 +10,7 @@
 
 #define ID             1    //incase you have more than 1 unit on same network, just change the unit ID to other number
 
-#define _version "V1.0"
+#define _version "V1.1"
 
 ///////////////////////
 // NETWORK UTILITIES
