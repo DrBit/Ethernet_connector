@@ -1,4 +1,3 @@
-
 #if defined(ARDUINO) && ARDUINO > 18
 #include <SPI.h>
 #endif
