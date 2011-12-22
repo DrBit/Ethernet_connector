@@ -54,14 +54,14 @@ int Ethernet_mantain_connection() {
 		  case DhcpStateLeased: {
 			#if defined DEBUG_serial
 			Serial.println("Obtained lease!");
-			#endif
+			
 			// Since we're here, it means that we now have a DHCP lease, so we
 			// print out some information.
 			const byte* ipAddr = EthernetDHCP.ipAddress();
 			const byte* gatewayAddr = EthernetDHCP.gatewayIpAddress();
 			const byte* dnsAddr = EthernetDHCP.dnsIpAddress();
 			
-			#if defined DEBUG_serial
+			
 			Serial.print("My IP address is ");
 			Serial.println(ip_to_str(ipAddr));
 			
@@ -171,6 +171,20 @@ void get_ip_from_dns_name() {
 }
 
 
+
+
+uint8_t *_ip;
+uint16_t _port;
+
+void set_server_ip(uint8_t *ip) {
+	_ip = ip;
+}
+
+void set_server_port(uint16_t port) {
+	_port = port;
+}
+
+
 // some variables for not bloking at this point
 #define number_of_retris 5
 unsigned int retris = 0;
@@ -180,7 +194,7 @@ boolean Ethernet_open_connection () {
 	Serial.println("connecting to the server");
 	delay (100);
 	#endif
-	if (client.connect()) {
+	if (client.connect(_ip,_port)) {
 		#if defined DEBUG_serial
 		Serial.println("connected");
 		#endif
