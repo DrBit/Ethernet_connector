@@ -11,7 +11,7 @@ void Ethernet_setup () {
 	// renewing your lease.
 	EthernetDHCP.begin(mac, 1);
 	#if defined DEBUG_serial
-	Serial.println("DHCP begin..."); 
+	Serial.println(F("DHCP begin...")); 
 	#endif
 }
 
@@ -32,28 +32,28 @@ int Ethernet_mantain_connection() {
 	if (prevState != state) {
 	
 	#if defined DEBUG_serial
-	Serial.println();
+	Serial.println(F(" "));
 	#endif
 	
 		switch (state) {
 		  case DhcpStateDiscovering:
 			#if defined DEBUG_serial
-			Serial.print("Discovering servers.");
+			Serial.print(F("Discovering servers."));
 			#endif
 			break;
 		  case DhcpStateRequesting:
 			#if defined DEBUG_serial
-			Serial.print("Requesting lease.");
+			Serial.print(F("Requesting lease."));
 			#endif
 			break;
 		  case DhcpStateRenewing:
 			#if defined DEBUG_serial
-			Serial.print("Renewing lease.");
+			Serial.print(F("Renewing lease."));
 			#endif
 			break;
 		  case DhcpStateLeased: {
 			#if defined DEBUG_serial
-			Serial.println("Obtained lease!");
+			Serial.println(F("Obtained lease!"));
 			
 			// Since we're here, it means that we now have a DHCP lease, so we
 			// print out some information.
@@ -62,13 +62,13 @@ int Ethernet_mantain_connection() {
 			const byte* dnsAddr = EthernetDHCP.dnsIpAddress();
 			
 			
-			Serial.print("My IP address is ");
+			Serial.print(F("My IP address is "));
 			Serial.println(ip_to_str(ipAddr));
 			
-			Serial.print("Gateway IP address is ");
+			Serial.print(F("Gateway IP address is "));
 			Serial.println(ip_to_str(gatewayAddr));
 
-			Serial.print("DNS IP address is ");
+			Serial.print(F("DNS IP address is "));
 			Serial.println(ip_to_str(dnsAddr));
 			#endif
 
@@ -88,7 +88,7 @@ int Ethernet_mantain_connection() {
 	} else if (state != DhcpStateLeased && millis() - prevTime > 300) {
 	 prevTime = millis();
 	 #if defined DEBUG_serial
-	 Serial.print('.'); 
+	 Serial.print (F(".")); 
 	 #endif
 	}
 
@@ -105,9 +105,9 @@ int Ethernet_mantain_connection() {
 void get_ip_from_dns_name() {
 
 	#if defined DEBUG_serial
-	Serial.print("Resolving ");
+	Serial.print(F("Resolving "));
 	Serial.print(hostName);
-	Serial.print(".");
+	Serial.print(F("."));
 	#endif
 
 	// Let's send our DNS query. If anything other than DNSSuccess is returned,
@@ -131,13 +131,13 @@ void get_ip_from_dns_name() {
 				// processed.
 				delay(20);
 				#if defined DEBUG_serial
-				Serial.print(".");
+				Serial.print(F("."));
 				#endif
 			}
 		} while (DNSTryLater == err);
 	}
 	#if defined DEBUG_serial
-	Serial.println();
+	Serial.println(F(" "));
 	#endif
 	// Finally, we have a result. We're just handling the most common errors
 	// here (success, timed out, not found) and just print others as an
@@ -145,26 +145,26 @@ void get_ip_from_dns_name() {
 	// EthernetDNS.h
 	if (DNSSuccess == err) {
 		#if defined DEBUG_serial
-		Serial.print("The IP address is ");
+		Serial.print(F("The IP address is "));
 		Serial.print(ip_to_str(server_ipAddr));
-		Serial.println(".");
+		Serial.println(F("."));
 		#endif
 		got_ip = true;
 	} else if (DNSTimedOut == err) {
 		#if defined DEBUG_serial
-		Serial.println("Timed out.");
+		Serial.println(F("Timed out."));
 		#endif
 		got_ip = false;
 	} else if (DNSNotFound == err) {
 		#if defined DEBUG_serial
-		Serial.println("Does not exist.");
+		Serial.println(F("Does not exist."));
 		#endif
 		got_ip = false;
 	} else {
 		#if defined DEBUG_serial
-		Serial.print("Failed with error code ");
+		Serial.print(F("Failed with error code "));
 		Serial.print((int)err, DEC);
-		Serial.println(".");
+		Serial.println(F("."));
 		#endif
 		got_ip = false;
 	}
@@ -191,18 +191,18 @@ unsigned int retris = 0;
 
 boolean Ethernet_open_connection () {
 	#if defined DEBUG_serial
-	Serial.println("connecting to the server");
+	Serial.println(F("connecting to the server"));
 	delay (100);
 	#endif
 	if (client.connect(_ip,_port)) {
 		#if defined DEBUG_serial
-		Serial.println("connected");
+		Serial.println(F("connected"));
 		#endif
 		return true;
 	} else {
 		// kf you didn't get a connection to the server:
 		#if defined DEBUG_serial
-		Serial.println("connection failed");
+		Serial.println(F("connection failed"));
 		#endif
 		// Double check for too many tries
 		retris ++;
@@ -250,19 +250,19 @@ void generate_label () {
 
 void getResponse(){  
 	#if defined DEBUG_serial
-	Serial.print("waiting for response.");
+	Serial.print(F("waiting for response."));
 	#endif
 	unsigned int timeoutCounter = 0;
 	while (!client.available()) {
 		// Wait for the client to be available
 		#if defined DEBUG_serial
-		Serial.print(".");
+		Serial.print(F("."));
 		#endif
 		delay (200);
 		timeoutCounter ++;
 		if (timeoutCounter > (15000/200)) {		// If greater than 15 seconds
 			#if defined DEBUG_serial
-			Serial.print("\nTime Out!");
+			Serial.print(F("\nTime Out!"));
 			#endif
 			send_command (00);			// Indicates function was not completed 
 			send_error (01);			// Indicates the error type generateds
@@ -271,7 +271,7 @@ void getResponse(){
 		}
 	}
 	#if defined DEBUG_serial
-	Serial.println(".");
+	Serial.println(F("."));
 	#endif
 	while (client.available()) {
 		XML_pharser();
@@ -281,9 +281,9 @@ void getResponse(){
 	// if the server's disconnected, stop the client:
 	if (!client.connected()) {
 		#if defined DEBUG_serial
-		Serial.println("\nserver closed session.");
+		Serial.println(F("\nserver closed session."));
 		if (received_data) {
-			Serial.print("received data: ");
+			Serial.print(F("received data: "));
 			Serial.println(labelParameter);
 		}
 		#endif
@@ -299,30 +299,30 @@ void getResponse(){
 
 void print_label () {
 	
-	client.print("GET /");
+	client.print(F("GET /"));
 	client.print(labelParameter);
-	client.println(" HTTP/1.0");
+	client.println(F(" HTTP/1.0"));
 
-	client.print("Host: ");
+	client.print(F("Host: "));
 	client.print(ip_to_str(printer_ipAddr));
-	client.print(":");
+	client.print(F(":"));
 	client.println(printer_port);
 	
-	client.print("User-Agent: Arduino SeedCounter Client ");
+	client.print(F("User-Agent: Arduino SeedCounter Client "));
 	client.println(_version);
 	
-	client.println("");
+	client.println(F(" "));
 	
 	delay (100);
 	
 	#if defined DEBUG_serial
-	Serial.println("\nPrinter request sended!!");
+	Serial.println(F("\nPrinter request sended!!"));
 	#endif
 }
 
 void stopEthernet(){
 	#if defined DEBUG_serial
-	Serial.println("Stoping ethernet.");
+	Serial.println(F("Stoping ethernet."));
 	#endif
 	
 	client.stop();
@@ -332,7 +332,7 @@ void stopEthernet(){
 	connected = false;
 	
 	#if defined DEBUG_serial
-	Serial.println("Ethernet stoped.");
+	Serial.println(F("Ethernet stoped."));
 	#endif
 }
 
@@ -349,9 +349,9 @@ const char* ip_to_str(const uint8_t* ipAddr)
 /***** Checks free ram and prints it serial *****/
 void mem_check () {
 	//checking memory:
-	Serial.print("Memory available: [");
+	Serial.print(F("Memory available: ["));
 	Serial.print(freeRam());
-	Serial.println(" bytes]");
+	Serial.println(F(" bytes]"));
 }
 
 /***** Returns free ram *****/

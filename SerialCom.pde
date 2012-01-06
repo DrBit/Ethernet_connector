@@ -494,7 +494,7 @@ void receive_printer_IP () {
 	//Serial.println (num);
 	printer_ipAddr[3] = (byte) num;
 	#if defined DEBUG_serial
-	Serial.print ("IP: ");
+	Serial.print (F("IP: "));
 	Serial.println (ip_to_str(printer_ipAddr));
 	#endif
 }

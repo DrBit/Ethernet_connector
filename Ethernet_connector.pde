@@ -15,7 +15,7 @@
 // NETWORK UTILITIES
 ///////////////////////
 
-// #define DEBUG_serial
+// #define DEBUG_serial a
 
 // #if defined DEBUG
 // Serial.println(val);
@@ -136,14 +136,14 @@ void loop()
 		if (got_ip) {					// If we get IP from the name
 			if (connection_case == generateLabel) {
 				#if defined DEBUG_serial
-				Serial.println("Set IP and port to pygmalion server");
+				Serial.println (F("Set IP and port to pygmalion server"));
 				#endif
 				set_server_ip(server_ipAddr);		// Refresh the IP addres to connect to
 				set_server_port(80);					// Change back the port to the default
 			}else{
 				if (!connected) {
 					#if defined DEBUG_serial
-					Serial.println("Set IP and port to printer host");
+					Serial.println(F("Set IP and port to printer host"));
 					#endif
 					set_server_ip(printer_ipAddr);			// Change IP to the next client
 					set_server_port(printer_port);			// Change port to the next client

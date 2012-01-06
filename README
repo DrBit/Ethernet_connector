@@ -6,6 +6,7 @@
 **
 **  V1.1 - 22/12/2011
 **  * Added compatibility with Arduino UNO IDE
+**  * Improved memory SDRAM usage with new function F() to store text in Flash memory
 **
 **  V1.0 - 18/10/2011
 **  * READY for production
