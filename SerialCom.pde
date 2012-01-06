@@ -267,56 +267,81 @@ void send_data () {
 // Common functions
 //////////////////////////
 
-void wait_for_print_command () {
+int wait_for_print_command () {
 	// Waiting for a comand to be received (default print command 04) as we already configured printer.
-	if (print_state == ready) {
 		
-		#if defined DEBUG_serial
-		Serial.println("Network ready!"); 
-		Serial.println("Waiting for print label command (C04)");
-		#endif
-		
-		boolean command_received = false;
-		while (!command_received) {
-			int last_command_received = receiveNextValidCommand();
-			if (last_command_received == 04) {				// Petition of configuration all correct.
-				send_command (1);
-				#if defined DEBUG_serial
-				Serial.println ("Starting process print label ");
-				#endif
-				command_received = true;
-				print_state = printing;
-				executed = false;
-			} else if (last_command_received == 03) {		// Petition to configure printer
-				send_command (1);
-				get_configuration ();
-				// command_received = true;
-			} else {		// Not the command we are expecting, wait for the good comand
-				// send error, (not expected command); (E10)
-				#if defined DEBUG_serial
-				Serial.print("NOT *C04* or *C03* command: ");
-				Serial.println(last_command_received);
-				#endif
-			}
-		}	
-	}else{
-		// we are in the preocess of printing
-		// check if ready
-	}
+	#if defined DEBUG_serial
+	Serial.println("Network ready!"); 
+	Serial.println("Waiting for print label command (C04)");
+	#endif
+	
+	boolean command_received = false;
+	while (!command_received) {
+		int last_command_received = receiveNextValidCommand();
+		if (last_command_received == 04) {				// Petition of configuration all correct.
+			send_command (1);
+			#if defined DEBUG_serial
+			Serial.println ("Starting process print label ");
+			#endif
+			command_received = true;
+			return last_command_received;
+			
+		// necessary????
+		} else if (last_command_received == 03) {		// Petition to configure printer
+			send_command (1);
+			get_configuration ();
+			// command_received = true;
+		} else {		// Not the command we are expecting, wait for the good comand
+			// send error, (not expected command); (E10)
+			#if defined DEBUG_serial
+			Serial.print("NOT *C04* or *C03* command: ");
+			Serial.println(last_command_received);
+			#endif
+		}
+	}	
 }
 
 
-void indicate_we_are_ready () {
+// INIT comunication with the arduino MEGA
+
+void open_comunication_with_arduino () {
 	send_command (5);		// To indicate we are ready to start
 	
-	// since we have to configure wait until we receive configure command
+	boolean command_received = false;
+	while (!command_received) {
+		int last_command_received = receiveNextValidCommand();
+		if (last_command_received == 01) {		// confirmation
+			command_received = true;	// Send flag DNS received correctly and get out.
+		} else {		// Not the command we are expecting, wait for the good comand
+			send_command (2);	// indicates ther is an error
+			send_error (3);		// send error, Expected command (C01) (confirmation)
+			#if defined DEBUG_serial
+			Serial.print("NOT *C01* command: ");
+			Serial.println(last_command_received);
+			#endif
+		}
+	}
+	
+	// confirmation received
+	// comunication open and ready!
+	#if defined DEBUG_serial
+	Serial.print("The module is now ready to comunicate");
+	#endif
+}
+
+
+// TODO!!!!!!!!!!!!!!!!!!!!!!!!!
+/*
+
+	// Comand C03 happens when arduino mega wants us to get the configuration and pass him
+	// the positions information
+	
 	boolean command_received = false;
 	while (!command_received) {
 		int last_command_received = receiveNextValidCommand();
 		if (last_command_received == 03) {		// Petition to configure printer
-			send_command (1);
-			// get_configuration ();
-			command_received = true;
+			
+			command_received = true;	// Send flag DNS received correctly and get out.
 		} else {		// Not the command we are expecting, wait for the good comand
 			send_command (2);	// indicates ther is an error
 			send_error (3);		// send error, Expected command (C03) (configure network)
@@ -327,9 +352,50 @@ void indicate_we_are_ready () {
 		}
 	}	
 	
+*/
+
+
+void receive_network_configuration () {
+/* 
+C07 - Send SA (server_address)
+C08 - Send SS (server_script)
+C09 - Send SB (seeds_batch)
+C10 - Send IP (printer_IP)
+C11 - Send PS (password)
+C12 - Send PP (printer_port)
+*/
+	delay(40);
+	send_command (7);
+	send_data (server_address);
+	delay (40);	
+	send_command (8);
+	send_data (server_script);
+	delay (40);	
+	send_command (9);
+	send_data (seeds_batch);
+	delay (40);	
+	send_command (10);
+	send_data (printer_IP);
+	delay (40);	
+	send_command (11);
+	send_data (password);
+	delay (40);	
+	send_command (12);
+	send_data (printer_port);
+
+	if (receive_next_answer(01) == 01) { 	// Command accepted
+		// All correct , continue
+		print_ok();
+	}else{
+		print_fail();
+		Serial.println (" * Configuration of network module Failed");
+		Serial.println(" * Press button 1 to try again");
+		press_button_to_continue (1);
+	}
 }
 
-
+// It is changing so not use for now
+/*
 void get_configuration () {
 	// Prepare to receive all configuration data
 	boolean SA = false;		// server_address (host name)
@@ -344,34 +410,35 @@ void get_configuration () {
 	Serial.println("Enter configuration "); 
 	#endif
 	// Test configuration
-	/*
-	SA: office.pygmalion.nl
-	SS: /labelgenerator/generate.php?batch_id=290
-	IP: 10.10.249.105
-	PS: ***********************
-	PP: 8000
-	SA || !SS || !IP || !PS || !PP
-	if (false) {		// just for testing...
-		SA = true;
-		SS = true;
-		IP = true;
-		PS = true;
-		PP = true;
-		SB = true;
-	}*/
+	
+	//SA: office.pygmalion.nl
+	//SS: /labelgenerator/generate.php?batch_id=290
+	//IP: 10.10.249.105
+	//PS: ***********************
+	//PP: 8000
+	//SA || !SS || !IP || !PS || !PP
+	//if (false) {		// just for testing...
+	//	SA = true;
+	//	SS = true;
+	//	IP = true;
+	//	PS = true;
+	//	PP = true;
+	//	SB = true;
+	//}
+	
 	// Check if we finished configuring
 	while (!SA || !SS || !IP || !PS || !PP || !SB)  {
 		#if defined DEBUG_serial
 		Serial.println("Ready to receive Command "); 
 		#endif
-		/* 
-		C07 - Send SA (server_address)
-		C08 - Send SS (server_script)
-		C09 - Send SB (seeds_batch)
-		C10 - Send IP (printer_IP)
-		C11 - Send PS (password)
-		C12 - Send PP (printer_port)
-		*/
+		
+		//C07 - Send SA (server_address)
+		//C08 - Send SS (server_script)
+		//C09 - Send SB (seeds_batch)
+		//C10 - Send IP (printer_IP)
+		//C11 - Send PS (password)
+		//C12 - Send PP (printer_port)
+		
 		int last_command_received = receiveNextValidCommand();
 		switch (last_command_received) { 
 			case 7:
@@ -440,6 +507,9 @@ void get_configuration () {
 	Serial.println (seeds_batch);
 	//#endif
 }
+*/
+
+/*
 
 void receive_printer_port () {
 	const int buf_port = 6;
@@ -494,7 +564,8 @@ void receive_printer_IP () {
 	//Serial.println (num);
 	printer_ipAddr[3] = (byte) num;
 	#if defined DEBUG_serial
-	Serial.print (F("IP: "));
+	Serial.print ("IP: ");
 	Serial.println (ip_to_str(printer_ipAddr));
 	#endif
 }
+*/

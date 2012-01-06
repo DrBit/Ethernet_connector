@@ -9,13 +9,13 @@
 
 #define ID             1    //incase you have more than 1 unit on same network, just change the unit ID to other number
 
-#define _version "V1.1"
+#define _version "V1.2"
 
 ///////////////////////
 // NETWORK UTILITIES
 ///////////////////////
 
-// #define DEBUG_serial a
+// #define DEBUG_serial
 
 // #if defined DEBUG
 // Serial.println(val);
@@ -71,25 +71,13 @@ byte mac[] = {
 
 // Not needed when using DNS
 byte server_ipAddr [4] = {  
-  // 209, 40, 205, 190		// www.pachube.com
-  // 10,42,43,50			// Mybook (Intranet)
-  // 8,8,8,8				// Google DNS server (Internet)
-  // 95,154,194,55			// personal server
   0,0,0,0					// Dummy
 };
 
-/*
-byte printer_ipAddr [4] = {  
-  10,10,249,105				// Local IP of the printer address
-};*/
-
 // testing at home
 byte printer_ipAddr [4] = {  
-  //10,42,43,13				// Local IP of the printer address (Home)
   10,10,249,116				// Local IP of the printer address (Haarlem)
 };
-
-
 
 
 #if defined(ARDUINO) && ARDUINO >= 100
@@ -108,13 +96,13 @@ void setup()
 	Serial.begin(9600);
 	delay(200);
 	mem_check ();
-	indicate_we_are_ready();
-	get_configuration();
-	Ethernet_setup();
+	open_comunication_with_arduino ();
+	// get_configuration();   // OLD
+	Enable_Ethernet();
 }
 
 
-boolean executed = false;
+
 boolean received_data = false;
 boolean got_ip = false;
 boolean print_once = false;
@@ -125,25 +113,105 @@ boolean got_response = false;
 #define printLabel true
 boolean connection_case = generateLabel;
  
+#define CONFIGURE 1
+#define START 2
+int program_state = CONFIGURE; // Only once
+ 
 void loop()
 {
+	// Check if we have to renew the DHCP lease with the gateway or obtain an IP if starting
 	int dhcp_state = Ethernet_mantain_connection();
-	// if we receive an oder from the serial port
+	
 	if (dhcp_state == 1) {				// if we have obtained an IP address..
-		// when we have an IP We execute orders (one time only)
-		//mem_check ();
+		switch (program_state) { 
+			// Get all configuration and update if necessary or send to arduino
+			case CONFIGURE:	
+				if (!update_configuration ()) {		// if configuration fails might be DNS name is wrong
+					// (only once)
+					// ASK to arduino mega if DNS name has changed? send the last value we have
+					// Has changed? then get data and update
+					// try again
+					
+					// try again or send error *E05* if too much retris
+				}else{
+					send_command (1);		// Send confirmation that module has been configured correctly
+					program_state = START
+				}
+			break;
+			
+			
+			case START:
+				int next_order = wait_for_print_command ();
+				if (next_order == 04) program_state = GET_LABEL;		// Wait until the counter sends us the command to print a label
+				// here comes update positions for mega
+			break;
+			
+			case GET_LABEL:
+				if (got_ip) {							// If we havent resolved an IP we have to resolve it first
+					#if defined DEBUG_serial
+					Serial.println("Set IP and port to pygmalion server");
+					#endif
+					set_server_ip(server_ipAddr);		// Refresh the IP addres to connect to
+					set_server_port(80);				// Change back the port to the default
+
+					if (!connected) {
+						connected = Ethernet_open_connection ();
+					}else {  // Open connection
+						// We have an oppen connection with the server so we send our requests
+						generate_label ();						// Send request to generate label
+						getResponse();							// get and processe response
+						if (got_response) {
+							stopEthernet();
+							got_response = false;				// reset falg
+							program_state = PRINT_LABEL;
+							#if defined DEBUG_serial
+							mem_check ();
+							#endif
+							received_data = false;				// Reset flag so its secure now that we already process every thing
+						}
+					}
+				}else get_ip_from_dns_name();				// Asks for a host and gets the IP addres trough DNS
+				
+			break:
+			
+			case PRINT_LABEL:
+				#if defined DEBUG_serial
+				Serial.println("Set IP and port to printer host");
+				#endif
+				set_server_ip(printer_ipAddr);			// Change IP to the next client
+				set_server_port(printer_port);			// Change port to the next client
+				
+				if (!connected) {
+					connected = Ethernet_open_connection ();
+				}else {  // Open connection
+					print_label ();							// Send request to print the label
+					send_command (06);						// Completed successfully
+					program_state = START;					// Goes to the start 
+					stopEthernet();
+				}
+			break:
+		}		
+	}else{
+		// We are obtaining or renewing a DHCp lease, if we wait too much means error...
+		// implement error
+		// Serial.print("0"); send arduino a confirmation that there has been an error
+	}
+}
+
+
+		/*mem_check ();
 		wait_for_print_command ();		// Wait until the counter sends us the command to print a label
 		if (got_ip) {					// If we get IP from the name
 			if (connection_case == generateLabel) {
 				#if defined DEBUG_serial
-				Serial.println (F("Set IP and port to pygmalion server"));
+				Serial.println("Set IP and port to pygmalion server");
 				#endif
 				set_server_ip(server_ipAddr);		// Refresh the IP addres to connect to
 				set_server_port(80);					// Change back the port to the default
 			}else{
 				if (!connected) {
 					#if defined DEBUG_serial
-					Serial.println(F("Set IP and port to printer host"));
+					Serial.println("Set IP and port to printer host");
 					#endif
 					set_server_ip(printer_ipAddr);			// Change IP to the next client
 					set_server_port(printer_port);			// Change port to the next client
@@ -177,16 +245,10 @@ void loop()
 				}
 			}
 		}else{
-			// If we havent get an IP we have to ask for one (only in case its a host
+			// If we havent resolved an IP so we have to resolve it first
 			if (connection_case == generateLabel) {		// When generate label we connect trough a host name so we need the IP
 				get_ip_from_dns_name();		// Asks for a host and gets the IP addres trough DNS
 			}else{
 				got_ip = true;				// because the IP of the printer we already took it from the previous configuration
 			}
-		}
-	}else{
-		// We are obtaining or renewing a DHCp lease, if we wait too much means error...
-		// implement error
-		// Serial.print("0"); send arduino a confirmation that has been an error
-	}
-}
+		}*/

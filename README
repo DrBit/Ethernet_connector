@@ -4,9 +4,12 @@
 *********************************************
 **  REVISIONS
 **
+**  V1.2 - 06/01/2012
+**  * Added new UI procedure
+**  * Changed the hole configuration process
+**
 **  V1.1 - 22/12/2011
 **  * Added compatibility with Arduino UNO IDE
-**  * Improved memory SDRAM usage with new function F() to store text in Flash memory
 **
 **  V1.0 - 18/10/2011
 **  * READY for production
