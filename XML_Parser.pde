@@ -40,7 +40,7 @@ void XML_pharser() {
 	#endif
     if (inputC == '<') {              // If it's a coming tag means we finished the data
       record_tag(inputC, tagRec);     // We will record the character for the coming tag
-      process_data(dataRec);          // Proces the recorded data as data
+      //process_data(dataRec);          // Proces the recorded data as data
       tag_mode = true;
       data_mode = false;              // Quit data mode
     }else{
@@ -101,6 +101,7 @@ void process_tag(char* tag_in) {
     data_mode = true;                       // We prepare to capture next data which will be the sensitive data
     reset_tag();                     // We reset the tag information
     got_match = false;               // We restore the got_match flag
+	clean_data(dataRec);			 // Clean data before getting the new one. 
   }else{                             // If we dont have a match, this tag is not what we want                               // END Debug
     reset_tag();                     // We wipeout the tag and
     inici = true;                    // Start over again
@@ -112,9 +113,11 @@ void process_tag(char* tag_in) {
 void process_data(char* data_in) {
 
 	for (int a=0; a<max_data_leng; a++) {
-		labelParameter[a] = data_in[a];
+		//labelParameter[a] = data_in[a];
 	}
-	
+}
+
+void clean_data(char* data_in) {
 	//Clean data
 	int len = strlen(data_in);
 	for (int c = 0; c < len; c++) {

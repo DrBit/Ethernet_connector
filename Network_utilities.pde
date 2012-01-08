@@ -103,18 +103,18 @@ int Ethernet_mantain_connection() {
 
 
 
-void get_ip_from_dns_name() {
+void get_ip_from_dns_name(char* pointer_hostName, byte* pointer_IPaddr) {
 
 	#if defined DEBUG_serial
 	Serial.print("Resolving ");
-	Serial.print(hostName);
+	Serial.print(pointer_hostName);
 	Serial.print(".");
 	#endif
 
 	// Let's send our DNS query. If anything other than DNSSuccess is returned,
 	// an error has occurred. A full list of possible return values is
 	// available in EthernetDNS.h
-	DNSError err = EthernetDNS.sendDNSQuery(hostName);
+	DNSError err = EthernetDNS.sendDNSQuery(pointer_hostName);
 
 	if (DNSSuccess == err) {
 		do {
@@ -123,8 +123,10 @@ void get_ip_from_dns_name() {
 			// We can use this behavior to go on with our sketch while the DNS
 			// server and network are busy finishing our request, rather than
 			// being blocked and waiting.
-			err = EthernetDNS.pollDNSReply(server_ipAddr);
-			// This procedure will fetch the IP adress and put into server_ipAddr
+			err = EthernetDNS.pollDNSReply(pointer_IPaddr);
+			//or
+			// err = EthernetDNS.pollDNSReply(pointer_IPaddr);
+			// This procedure will fetch the IP adress and put into pointer_IPaddr
 
 			if (DNSTryLater == err) {
 				// You could do real stuff here, or go on with a your loop(). I'm
@@ -147,7 +149,7 @@ void get_ip_from_dns_name() {
 	if (DNSSuccess == err) {
 		#if defined DEBUG_serial
 		Serial.print("The IP address is ");
-		Serial.print(ip_to_str(server_ipAddr));
+		Serial.print(ip_to_str(pointer_IPaddr));
 		Serial.println(".");
 		#endif
 		got_ip = true;
@@ -195,7 +197,7 @@ boolean Ethernet_open_connection () {
 	Serial.println("connecting to the server");
 	delay (100);
 	#endif
-	if (client.connect(_ip,_port)) {
+	if (client.connect()) {  //_ip,_port
 		#if defined DEBUG_serial
 		Serial.println("connected");
 		#endif
@@ -221,10 +223,9 @@ boolean Ethernet_open_connection () {
 
 void resetState () {
 	connected = false;
-	executed =  false;
-	connection_case = generateLabel;
+	//executed =  false;
 	got_ip= false;
-	print_state = ready;
+	// print_state = ready;
 }
 
 
@@ -285,7 +286,7 @@ void getResponse(){
 		Serial.println("\nserver closed session.");
 		if (received_data) {
 			Serial.print("received data: ");
-			Serial.println(labelParameter);
+			Serial.println(dataRec);
 		}
 		#endif
 		got_response = true;
@@ -301,7 +302,7 @@ void getResponse(){
 void print_label () {
 	
 	client.print("GET /");
-	client.print(labelParameter);
+	client.print(dataRec);
 	client.println(" HTTP/1.0");
 
 	client.print("Host: ");
@@ -411,8 +412,9 @@ done!
 		
 
 // once the Ethernet is configured we can retrieve all configuration from the server
-void update_configuration () {
-
+boolean update_configuration () {
+	
+	// &ui_server, 
 	// try to conect to the previous dns name recorded in Eeprom
 	// retrieve IP from the DNS
 	// open connection and send petition of all configuration data (exclude positions)
@@ -423,7 +425,7 @@ void update_configuration () {
 	
 	//now we can get the conficuration
 	//TODO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  
-	
+	/*
 	// Prepare to receive all configuration data
 	boolean SA = false;		// server_address (host name)
 	boolean SS = false;		// server_script (Host Address)
@@ -532,14 +534,15 @@ void update_configuration () {
 	Serial.println (printer_port);
 	Serial.print ("SB: ");
 	Serial.println (seeds_batch);
-	//#endif
+	//#endif */
+	return true;
 }
 
 boolean is_UI_server_alive () {
 	// get DNS name from arduino
 	boolean SA = false;		// server_address (host name)
 	while (!SA)  {
-	
+		SA = true;
 	}
 	return true;
 }

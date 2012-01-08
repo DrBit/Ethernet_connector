@@ -25,16 +25,13 @@ int receiveNextValidCommand () {
 	while (true) {
 		while (Serial.available()) {
 			char c = (char) Serial.read();
-			//Serial.print (c);	// JUST for debug
 			
 			if (c == endOfLine) { 		// begining or end of command
-				//Serial.print ("-End of line detected-");
 				// In this case we check if we had previous data in the buffer and process it if necessary
 				// restart all and ready to receive a commmand
 				if (lookForNumber) {
 					lookForNumber = false;
-					if (processCommand()) {	// we got a valid command!
-						//Serial.print ("-Process command-");						
+					if (processCommand()) {	// we got a valid command!						
 						if (incomingCommand) {
 							reset_command ();
 							return commandNumberInt;
@@ -48,13 +45,11 @@ int receiveNextValidCommand () {
 			}
 			
 			if (lookForLetter && (c == 'C')) {
-				//Serial.print ("-C detected-");
 				// we got an incoming comand, start receive command number
 				lookForNumber = true;
 				incomingCommand = true;
 				lookForLetter = false;
 			}else if (lookForNumber) {
-				//Serial.print ("-Number-");
 				// We look for the command number
 				commandNumber[numberIndex] = c;
 				if (numberIndex == command_digits) { 
@@ -271,8 +266,8 @@ int wait_for_print_command () {
 	// Waiting for a comand to be received (default print command 04) as we already configured printer.
 		
 	#if defined DEBUG_serial
-	Serial.println("Network ready!"); 
-	Serial.println("Waiting for print label command (C04)");
+	mem_check ();
+	Serial.println("Waiting command (C04)");
 	#endif
 	
 	boolean command_received = false;
@@ -289,7 +284,7 @@ int wait_for_print_command () {
 		// necessary????
 		} else if (last_command_received == 03) {		// Petition to configure printer
 			send_command (1);
-			get_configuration ();
+			// get_configuration ();
 			// command_received = true;
 		} else {		// Not the command we are expecting, wait for the good comand
 			// send error, (not expected command); (E10)
@@ -325,7 +320,7 @@ void open_comunication_with_arduino () {
 	// confirmation received
 	// comunication open and ready!
 	#if defined DEBUG_serial
-	Serial.print("The module is now ready to comunicate");
+	Serial.print("Module ready!");
 	#endif
 }
 
@@ -363,7 +358,7 @@ C09 - Send SB (seeds_batch)
 C10 - Send IP (printer_IP)
 C11 - Send PS (password)
 C12 - Send PP (printer_port)
-*/
+*//*
 	delay(40);
 	send_command (7);
 	send_data (server_address);
@@ -383,6 +378,7 @@ C12 - Send PP (printer_port)
 	send_command (12);
 	send_data (printer_port);
 
+	
 	if (receive_next_answer(01) == 01) { 	// Command accepted
 		// All correct , continue
 		print_ok();
@@ -391,7 +387,7 @@ C12 - Send PP (printer_port)
 		Serial.println (" * Configuration of network module Failed");
 		Serial.println(" * Press button 1 to try again");
 		press_button_to_continue (1);
-	}
+	}*/
 }
 
 // It is changing so not use for now

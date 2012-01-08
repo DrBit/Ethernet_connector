@@ -9,13 +9,13 @@
 
 #define ID             1    //incase you have more than 1 unit on same network, just change the unit ID to other number
 
-#define _version "V1.2"
+#define _version "V1.3"
 
 ///////////////////////
 // NETWORK UTILITIES
 ///////////////////////
 
-// #define DEBUG_serial
+ #define DEBUG_serial
 
 // #if defined DEBUG
 // Serial.println(val);
@@ -27,8 +27,8 @@
 ////////////////////////
 
 //Defines
-#define max_tag_leng 18		// Max leng of tag
-#define max_data_leng 120		// Max leng of tag
+#define max_tag_leng 12		// Max leng of tag
+#define max_data_leng 80		// Max leng of tag
 #define numberOfTags 1			// Define the number of tags we are gona use (remember last one is /0)
 
 //VARs
@@ -40,7 +40,7 @@ char dataRec[max_data_leng];	// Var containg the data
 int data_type = 0;				// Container to store the type of data acording to the tag
 
 //VARs for storing results
-char labelParameter[max_data_leng];
+// char labelParameter[max_data_leng];
 
 // FLAGS
 boolean tag_mode =false;
@@ -54,7 +54,7 @@ boolean got_match = false;
 
 const int buffer_command = 3;
 const int buffer_batch = 4;
-const int buffer = 48;
+const int buffer = 44;
 const int bufferShort = 31;
 char hostName[bufferShort]= "office.pygmalion.nl";
 char hostAddress[buffer] = "/labelgenerator/generate.php?batch_id=";
@@ -62,15 +62,20 @@ char password[bufferShort] = "YXJkdWlubzpQQXBhWXViQTMzd3I=";
 uint16_t printer_port = 8000;
 char seeds_batch[buffer_batch] = "600";
 
-boolean print_state = 0;
-#define ready 0
-#define printing 1
+// boolean print_state = 0;
+// #define ready 0
+// #define printing 1
 
 byte mac[] = { 
   0xDE, 0xAD, 0xCA, 0xEF, 0xFE,  byte(ID) };
 
 // Not needed when using DNS
 byte server_ipAddr [4] = {  
+  0,0,0,0					// Dummy
+};
+
+// UI server ip address
+byte UIserver_ipAddr [4] = {  
   0,0,0,0					// Dummy
 };
 
@@ -86,46 +91,55 @@ EthernetClient client;
 Client client(server_ipAddr, 80);
 #endif
 
-
+// Function to format IP and print it in serial com.
 const char* ip_to_str(const uint8_t*);		// Format IP address
 
 
-
+// Setup
 void setup()
 {
 	Serial.begin(9600);
 	delay(200);
-	mem_check ();
-	open_comunication_with_arduino ();
-	// get_configuration();   // OLD
-	Enable_Ethernet();
+	mem_check ();				// Displays memory always to have an idea of free ram
+	init_DB ();					// Necessary to init DB
+	// manual_data_write ();	// Write temp variables in the eeprom
+	Show_all_records();			// Show records in the eeprom, (Not executed in no debug mode
+	open_comunication_with_arduino ();	// Opens serial comunications with arduino
+	Enable_Ethernet();			// Enebales ethernet module
 }
 
 
-
+// Flags
 boolean received_data = false;
 boolean got_ip = false;
 boolean print_once = false;
 boolean connected = false;
 boolean got_response = false;
-
-#define generateLabel false
-#define printLabel true
-boolean connection_case = generateLabel;
  
+// Program states
 #define CONFIGURE 1
 #define START 2
-int program_state = CONFIGURE; // Only once
- 
+#define GET_LABEL 3
+#define PRINT_LABEL 4
+#define UPDATE_POSITIONS 5
+int program_state = CONFIGURE; 
+
+// Retries control
+int retries = 0;
+int last_program_state = 0;
+
+// Main loop
 void loop()
 {
 	// Check if we have to renew the DHCP lease with the gateway or obtain an IP if starting
 	int dhcp_state = Ethernet_mantain_connection();
 	
+	
+	
 	if (dhcp_state == 1) {				// if we have obtained an IP address..
 		switch (program_state) { 
 			// Get all configuration and update if necessary or send to arduino
-			case CONFIGURE:	
+			case CONFIGURE:	{
 				if (!update_configuration ()) {		// if configuration fails might be DNS name is wrong
 					// (only once)
 					// ASK to arduino mega if DNS name has changed? send the last value we have
@@ -135,21 +149,27 @@ void loop()
 					// try again or send error *E05* if too much retris
 				}else{
 					send_command (1);		// Send confirmation that module has been configured correctly
-					program_state = START
+					program_state = START;
 				}
-			break;
+			break; }
 			
 			
-			case START:
+			case START: {
 				int next_order = wait_for_print_command ();
-				if (next_order == 04) program_state = GET_LABEL;		// Wait until the counter sends us the command to print a label
+				if (next_order == 4) {
+					program_state = GET_LABEL;			// Wait until the counter sends us the command to print a label
+				}
+				if (next_order == 5) { 
+					program_state = UPDATE_POSITIONS;		// Wait until the counter sends us the command to print a label
+				}
+				program_state = GET_LABEL;
 				// here comes update positions for mega
-			break;
+			break;}
 			
-			case GET_LABEL:
+			case GET_LABEL: {
 				if (got_ip) {							// If we havent resolved an IP we have to resolve it first
 					#if defined DEBUG_serial
-					Serial.println("Set IP and port to pygmalion server");
+					Serial.println("Set IP/port to pygmalion");
 					#endif
 					set_server_ip(server_ipAddr);		// Refresh the IP addres to connect to
 					set_server_port(80);				// Change back the port to the default
@@ -170,13 +190,23 @@ void loop()
 							received_data = false;				// Reset flag so its secure now that we already process every thing
 						}
 					}
-				}else get_ip_from_dns_name();				// Asks for a host and gets the IP addres trough DNS
+				}else {
+					get_ip_from_dns_name(hostName,server_ipAddr);		// Asks for a host and gets the IP addres trough DNS
+					if (retries >= 2) {
+						//send error
+						#if defined DEBUG_serial
+						mem_check ();
+						Serial.println ("too much retries");
+						#endif
+						program_state = START;
+					}
+				}
 				
-			break:
+			break;}
 			
-			case PRINT_LABEL:
+			case PRINT_LABEL:{
 				#if defined DEBUG_serial
-				Serial.println("Set IP and port to printer host");
+				Serial.println("Set IP/port to printer");
 				#endif
 				set_server_ip(printer_ipAddr);			// Change IP to the next client
 				set_server_port(printer_port);			// Change port to the next client
@@ -189,12 +219,27 @@ void loop()
 					program_state = START;					// Goes to the start 
 					stopEthernet();
 				}
-			break:
+			break;}
+			
+			case UPDATE_POSITIONS:{
+				// answer mega with confirm? or its already done?
+				// get all positions from website UI
+				// pass them to arduino Mega
+				program_state = START;					// get back to start
+			break;}
 		}		
 	}else{
 		// We are obtaining or renewing a DHCp lease, if we wait too much means error...
 		// implement error
 		// Serial.print("0"); send arduino a confirmation that there has been an error
+	}
+	
+	// Little retries for errors check
+	if (program_state != last_program_state) {
+		retries = 1;
+		last_program_state = program_state;
+	}else{
+		retries ++;
 	}
 }
 
