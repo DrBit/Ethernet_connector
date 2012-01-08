@@ -232,15 +232,15 @@ void resetState () {
 void generate_label () {
 
 	client.print("GET ");
-	client.print(hostAddress);
+	client.print(config.server_script);
 	client.print(seeds_batch);
 	client.println(" HTTP/1.0");
 	
 	client.print("Authorization: Basic ");
-	client.println(password);    //user:password -> encoded in base64 -> http://maxcalci.com/base64.html
+	client.println(config.password);    //user:password -> encoded in base64 -> http://maxcalci.com/base64.html
 	
 	client.print("Host: ");
-	client.println(hostName);
+	client.println(config.server_address);
 	
 	client.print("User-Agent: Arduino SeedCounter Client ");
 	client.println(_version);
@@ -306,9 +306,9 @@ void print_label () {
 	client.println(" HTTP/1.0");
 
 	client.print("Host: ");
-	client.print(ip_to_str(printer_ipAddr));
+	client.print(ip_to_str(config.printer_IP));
 	client.print(":");
-	client.println(printer_port);
+	client.println(config.printer_port);
 	
 	client.print("User-Agent: Arduino SeedCounter Client ");
 	client.println(_version);

@@ -37,7 +37,7 @@ char tagRec[max_tag_leng];		// Var containg the tag
 char dataRec[max_data_leng];	// Var containg the data  
 
 // int  Data_results[numberOfTags]={0, 0};
-int data_type = 0;				// Container to store the type of data acording to the tag
+byte data_type = 0;				// Container to store the type of data acording to the tag
 
 //VARs for storing results
 // char labelParameter[max_data_leng];
@@ -48,41 +48,37 @@ boolean data_mode = false;
 boolean inici = true;
 boolean got_match = false;
 
+
+// Records of the DB
+struct MyRec {
+	// Containig
+	char server_address[25];			// example: office.pygmalion.nl
+	char server_script[45];				// example: /labelgenerator/generate.php?batch_id=
+	byte printer_IP[4];					// example: {10,250,1,8}
+	unsigned int printer_port;			// example: 8000
+	char password[30];					// example: YXJkdWlubzpQQXBhWXViQTMzd3I=
+	char ui_server[25];					// example: robot.eric.nr1net.corp
+	byte machine_id;					// example: 1
+} config;
+// When changing the structure data in the eeprom needs to be rewritten
+
 ////////////////////////
 // NETWORK VARs & DEFINES
 ////////////////////////
 
 const int buffer_command = 3;
 const int buffer_batch = 4;
-const int buffer = 44;
-const int bufferShort = 31;
-char hostName[bufferShort]= "office.pygmalion.nl";
-char hostAddress[buffer] = "/labelgenerator/generate.php?batch_id=";
-char password[bufferShort] = "YXJkdWlubzpQQXBhWXViQTMzd3I=";
-uint16_t printer_port = 8000;
 char seeds_batch[buffer_batch] = "600";
 
-// boolean print_state = 0;
-// #define ready 0
-// #define printing 1
-
+// Generate a random MAC for each device
 byte mac[] = { 
-  0xDE, 0xAD, 0xCA, 0xEF, 0xFE,  byte(ID) };
+  0xDE, 0xAD, 0xCA, 0xEF, 0xFE,  (ID) };
 
-// Not needed when using DNS
+// Need for temporary store the retrieval of IP address from DNS names
 byte server_ipAddr [4] = {  
   0,0,0,0					// Dummy
 };
 
-// UI server ip address
-byte UIserver_ipAddr [4] = {  
-  0,0,0,0					// Dummy
-};
-
-// testing at home
-byte printer_ipAddr [4] = {  
-  10,10,249,116				// Local IP of the printer address (Haarlem)
-};
 
 
 #if defined(ARDUINO) && ARDUINO >= 100
@@ -102,8 +98,9 @@ void setup()
 	delay(200);
 	mem_check ();				// Displays memory always to have an idea of free ram
 	init_DB ();					// Necessary to init DB
-	// manual_data_write ();	// Write temp variables in the eeprom
+	manual_data_write ();		// Write temp variables in the eeprom
 	Show_all_records();			// Show records in the eeprom, (Not executed in no debug mode
+	read_records_entry1 ();		// Reads first row of records in case we have 2 different configurations
 	open_comunication_with_arduino ();	// Opens serial comunications with arduino
 	Enable_Ethernet();			// Enebales ethernet module
 }
@@ -122,11 +119,12 @@ boolean got_response = false;
 #define GET_LABEL 3
 #define PRINT_LABEL 4
 #define UPDATE_POSITIONS 5
-int program_state = CONFIGURE; 
+byte program_state = CONFIGURE; 
+byte last_program_state = 0;
 
 // Retries control
-int retries = 0;
-int last_program_state = 0;
+byte retries = 0;
+
 
 // Main loop
 void loop()
@@ -191,7 +189,7 @@ void loop()
 						}
 					}
 				}else {
-					get_ip_from_dns_name(hostName,server_ipAddr);		// Asks for a host and gets the IP addres trough DNS
+					get_ip_from_dns_name(config.server_address,server_ipAddr);		// Asks for a host and gets the IP addres trough DNS
 					if (retries >= 2) {
 						//send error
 						#if defined DEBUG_serial
@@ -208,8 +206,8 @@ void loop()
 				#if defined DEBUG_serial
 				Serial.println("Set IP/port to printer");
 				#endif
-				set_server_ip(printer_ipAddr);			// Change IP to the next client
-				set_server_port(printer_port);			// Change port to the next client
+				set_server_ip(config.printer_IP);			// Change IP to the next client
+				set_server_port(config.printer_port);			// Change port to the next client
 				
 				if (!connected) {
 					connected = Ethernet_open_connection ();

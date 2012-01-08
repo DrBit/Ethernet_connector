@@ -7,6 +7,7 @@
 **  V1.3 - 08/01/2012
 **  * Implemented recording of configuration in eeprom
 **  * Improved code to save memory
+**  * All configuration variables ported to use Eeprom memory
 **
 **  V1.2 - 06/01/2012
 **  * Added new UI procedure
