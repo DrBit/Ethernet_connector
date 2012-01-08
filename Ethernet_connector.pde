@@ -27,22 +27,18 @@
 ////////////////////////
 
 //Defines
-#define max_tag_leng 12		// Max leng of tag
+#define max_tag_leng 12			// Max leng of tag
 #define max_data_leng 80		// Max leng of tag
 #define numberOfTags 1			// Define the number of tags we are gona use (remember last one is /0)
 
 //VARs
 const char* myTagStrings[numberOfTags]={"<response>"};   // Array of tags
+// Keep non configuration tags at the end of the chain (like response)
+byte LastTagNumber = 0;			// Container where we store last found tag
 char tagRec[max_tag_leng];		// Var containg the tag
 char dataRec[max_data_leng];	// Var containg the data  
 
-// int  Data_results[numberOfTags]={0, 0};
-byte data_type = 0;				// Container to store the type of data acording to the tag
-
-//VARs for storing results
-// char labelParameter[max_data_leng];
-
-// FLAGS
+// FLAGS for XML
 boolean tag_mode =false;
 boolean data_mode = false;
 boolean inici = true;
@@ -52,13 +48,13 @@ boolean got_match = false;
 // Records of the DB
 struct MyRec {
 	// Containig
-	char server_address[25];			// example: office.pygmalion.nl
-	char server_script[45];				// example: /labelgenerator/generate.php?batch_id=
-	byte printer_IP[4];					// example: {10,250,1,8}
-	unsigned int printer_port;			// example: 8000
-	char password[30];					// example: YXJkdWlubzpQQXBhWXViQTMzd3I=
-	char ui_server[25];					// example: robot.eric.nr1net.corp
-	byte machine_id;					// example: 1
+	char server_address[25];		// example: office.pygmalion.nl
+	char server_script[45];			// example: /labelgenerator/generate.php?batch_id=
+	byte printer_IP[4];				// example: {10,250,1,8}
+	unsigned int printer_port;		// example: 8000
+	char password[30];				// example: YXJkdWlubzpQQXBhWXViQTMzd3I=
+	char ui_server[25];				// example: robot.eric.nr1net.corp
+	byte machine_id;				// example: 1
 } config;
 // When changing the structure data in the eeprom needs to be rewritten
 
@@ -78,7 +74,6 @@ byte mac[] = {
 byte server_ipAddr [4] = {  
   0,0,0,0					// Dummy
 };
-
 
 
 #if defined(ARDUINO) && ARDUINO >= 100
@@ -109,7 +104,7 @@ void setup()
 // Flags
 boolean received_data = false;
 boolean got_ip = false;
-boolean print_once = false;
+// boolean print_once = false;
 boolean connected = false;
 boolean got_response = false;
  
@@ -132,25 +127,29 @@ void loop()
 	// Check if we have to renew the DHCP lease with the gateway or obtain an IP if starting
 	int dhcp_state = Ethernet_mantain_connection();
 	
-	
-	
 	if (dhcp_state == 1) {				// if we have obtained an IP address..
 		switch (program_state) { 
 			// Get all configuration and update if necessary or send to arduino
 			case CONFIGURE:	{
-				if (!update_configuration ()) {		// if configuration fails might be DNS name is wrong
+				if (!fetch_configuration ()) {		// if configuration fails might be DNS name is wrong
 					// (only once)
 					// ASK to arduino mega if DNS name has changed? send the last value we have
 					// Has changed? then get data and update
 					// try again
 					
-					// try again or send error *E05* if too much retris
+					if (retries >= 2) {
+						//send error
+						#if defined DEBUG_serial
+						mem_check ();
+						Serial.println ("too much retries");
+						#endif
+						program_state = START;	// Or in this case send an error and halt
+					}
 				}else{
 					send_command (1);		// Send confirmation that module has been configured correctly
 					program_state = START;
 				}
 			break; }
-			
 			
 			case START: {
 				int next_order = wait_for_print_command ();
@@ -171,10 +170,9 @@ void loop()
 					#endif
 					set_server_ip(server_ipAddr);		// Refresh the IP addres to connect to
 					set_server_port(80);				// Change back the port to the default
-
 					if (!connected) {
 						connected = Ethernet_open_connection ();
-					}else {  // Open connection
+					}else { 
 						// We have an oppen connection with the server so we send our requests
 						generate_label ();						// Send request to generate label
 						getResponse();							// get and processe response

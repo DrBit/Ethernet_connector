@@ -330,7 +330,7 @@ void stopEthernet(){
 	client.stop();
 	// executed = false;
 	got_ip=false;
-	print_once = false;
+	// print_once = false;
 	connected = false;
 	
 	#if defined DEBUG_serial
@@ -388,37 +388,45 @@ Check dns name
 get IP from it
 done!
 */
-
-
-// retrieve all configuration
-// script to do that: /arduino/get/id/1/data/table=configuration;getallfields
-
-// What configuration do we need to get from the server?
-
-		// Info that stays in this arduino
-		//C07 - Send SA (server_address)
-		//C08 - Send SS (server_script)
-		//C09 - Send SB (seeds_batch)
-		//C10 - Send IP (printer_IP)
-		//C11 - Send PS (password)
-		//C12 - Send PP (printer_port)
-		
-		// check if we have to update this info from the eeprom
-		
-		
-		// Info that is passed onto arduino mega
-		
-		// ALL positions
 		
 
 // once the Ethernet is configured we can retrieve all configuration from the server
-boolean update_configuration () {
-	
-	// &ui_server, 
-	// try to conect to the previous dns name recorded in Eeprom
-	// retrieve IP from the DNS
-	// open connection and send petition of all configuration data (exclude positions)
-	// Phrase all data received and update if necessary
+boolean fetch_configuration () {
+	byte retries1 = 0;
+	while (retries < 10) {
+		if (got_ip) {
+			#if defined DEBUG_serial
+			Serial.println("IP of UI server retrieved!");
+			#endif
+			set_server_ip(server_ipAddr);		// Refresh the IP addres to connect to
+			set_server_port(80);				// Change back the port to the default
+			
+			if (!connected) {	// open connection and send petition of all configuration data (exclude positions)
+				connected = Ethernet_open_connection ();		// Try to open connection
+			}else{
+				// Send GET petition to get configuration data
+				HTTP_get_config ();						// Send request to generate label
+				getResponse();							// Pharse all data received and update if necessary
+				if (got_response) {
+					stopEthernet();
+					got_response = false;				// reset falg
+					received_data = false;				// Reset flag so its secure now that we already process every thing
+					#if defined DEBUG_serial
+					mem_check ();
+					#endif
+					return true;
+				}else{
+					// if we havent got response, either the server is down or the response was not valid
+					return false;
+				}
+			}
+		}else{
+			// try to conect to the previous dns name recorded in Eeprom and retrieve IP
+			get_ip_from_dns_name(config.ui_server,server_ipAddr);
+		}
+		retries1++;
+	}
+	return false;
 	
 	
 	
@@ -536,6 +544,42 @@ boolean update_configuration () {
 	Serial.println (seeds_batch);
 	//#endif */
 	return true;
+}
+
+
+// retrieve all configuration
+// script to do that: /arduino/get/id/1/data/table=configuration;getallfields
+
+// What configuration do we need to get from the server?
+
+	// Info that stays in this arduino
+	//C07 - Send SA (server_address)
+	//C08 - Send SS (server_script)
+	//C09 - Send SB (seeds_batch)
+	//C10 - Send IP (printer_IP)
+	//C11 - Send PS (password)
+	//C12 - Send PP (printer_port)
+	
+	// check if we have to update this info from the eeprom
+	
+	
+	// Info that is passed onto arduino mega
+	
+	// ALL positions
+
+void HTTP_get_config () {
+
+	client.print("GET /arduino/get/id/1/data/table=configuration;getallfields");
+	client.println(" HTTP/1.0");
+	
+	client.print("Host: ");
+	client.println(config.ui_server);
+	
+	client.print("User-Agent: Arduino SeedCounter Client ");
+	client.println(_version);
+	
+	client.println();
+	delay (100);
 }
 
 boolean is_UI_server_alive () {

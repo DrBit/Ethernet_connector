@@ -8,6 +8,7 @@
 **  * Implemented recording of configuration in eeprom
 **  * Improved code to save memory
 **  * All configuration variables ported to use Eeprom memory
+**  * Added process of new XML tags (for configuration)
 **
 **  V1.2 - 06/01/2012
 **  * Added new UI procedure
