@@ -25,6 +25,7 @@ void read_records_entry1 ()
 	#endif
 }
 
+
 void Show_all_records()
 {
 	#if defined DEBUG_serial
@@ -76,4 +77,6 @@ void manual_data_write () {
 	
 	//Show_all_records();
 }
+
+
 

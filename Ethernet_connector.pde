@@ -5,17 +5,19 @@
 #include <Ethernet.h>
 #include <EthernetDHCP.h>
 #include <EthernetDNS.h>
+#include <avr/pgmspace.h>
 
 
 #define ID             1    //incase you have more than 1 unit on same network, just change the unit ID to other number
 
-#define _version "V1.3"
+#define _version "V1.3.1"
 
 ///////////////////////
 // NETWORK UTILITIES
 ///////////////////////
 
  #define DEBUG_serial
+ #define NO_DNS				// USE in case we dont have DNS server (ONLY FOR DEBUG)
 
 // #if defined DEBUG
 // Serial.println(val);
@@ -28,11 +30,17 @@
 
 //Defines
 #define max_tag_leng 12			// Max leng of tag
-#define max_data_leng 80		// Max leng of tag
-#define numberOfTags 1			// Define the number of tags we are gona use (remember last one is /0)
+#define max_data_leng 110		// Max leng of tag
+#define numberOfTags 20			// Define the number of tags we are gona use (remember last one is /0)
 
 //VARs
-const char* myTagStrings[numberOfTags]={"<response>"};   // Array of tags
+const char* myTagStrings[numberOfTags]={
+
+	"<SA>", "<SS>", "<PS>", "<PP>",
+	"<IP1>", "<IP2>", "<IP3>", "<IP4>",
+	"<response>"
+};   // Array of tags
+
 // Keep non configuration tags at the end of the chain (like response)
 byte LastTagNumber = 0;			// Container where we store last found tag
 char tagRec[max_tag_leng];		// Var containg the tag
@@ -93,9 +101,9 @@ void setup()
 	delay(200);
 	mem_check ();				// Displays memory always to have an idea of free ram
 	init_DB ();					// Necessary to init DB
-	manual_data_write ();		// Write temp variables in the eeprom
-	Show_all_records();			// Show records in the eeprom, (Not executed in no debug mode
 	read_records_entry1 ();		// Reads first row of records in case we have 2 different configurations
+	Show_all_records();			// Show records in the eeprom, (Not executed in no debug mode
+	// manual_data_write ();	// Write temp variables in the eeprom
 	open_comunication_with_arduino ();	// Opens serial comunications with arduino
 	Enable_Ethernet();			// Enebales ethernet module
 }
@@ -104,7 +112,6 @@ void setup()
 // Flags
 boolean received_data = false;
 boolean got_ip = false;
-// boolean print_once = false;
 boolean connected = false;
 boolean got_response = false;
  
@@ -120,6 +127,16 @@ byte last_program_state = 0;
 // Retries control
 byte retries = 0;
 
+// TEXT srtrings
+
+prog_uchar loop1[] PROGMEM  = {"Too much retries."};
+prog_uchar loop2[] PROGMEM  = {"Set IP/port to pygmalion."};
+prog_uchar loop3[] PROGMEM  = {"Set IP/port to printer"};
+prog_uchar loop4[] PROGMEM  = {"Preparing to fetch configuration from the User Interface server."};
+prog_uchar loop5[] PROGMEM  = {""};
+prog_uchar loop6[] PROGMEM  = {""};
+prog_uchar loop7[] PROGMEM  = {""};
+
 
 // Main loop
 void loop()
@@ -131,6 +148,10 @@ void loop()
 		switch (program_state) { 
 			// Get all configuration and update if necessary or send to arduino
 			case CONFIGURE:	{
+				#if defined DEBUG_serial
+				SerialFlashPrintln (loop4);
+				// Serial.println ("too much retries");
+				#endif
 				if (!fetch_configuration ()) {		// if configuration fails might be DNS name is wrong
 					// (only once)
 					// ASK to arduino mega if DNS name has changed? send the last value we have
@@ -141,18 +162,20 @@ void loop()
 						//send error
 						#if defined DEBUG_serial
 						mem_check ();
-						Serial.println ("too much retries");
+						SerialFlashPrintln (loop1);
+						// Serial.println ("too much retries");
 						#endif
 						program_state = START;	// Or in this case send an error and halt
 					}
 				}else{
 					send_command (1);		// Send confirmation that module has been configured correctly
 					program_state = START;
+					Show_all_records();		// For debug only
 				}
 			break; }
 			
 			case START: {
-				int next_order = wait_for_print_command ();
+				byte next_order = wait_for_print_command ();
 				if (next_order == 4) {
 					program_state = GET_LABEL;			// Wait until the counter sends us the command to print a label
 				}
@@ -166,7 +189,8 @@ void loop()
 			case GET_LABEL: {
 				if (got_ip) {							// If we havent resolved an IP we have to resolve it first
 					#if defined DEBUG_serial
-					Serial.println("Set IP/port to pygmalion");
+					SerialFlashPrintln (loop2);
+					// Serial.println("Set IP/port to pygmalion");
 					#endif
 					set_server_ip(server_ipAddr);		// Refresh the IP addres to connect to
 					set_server_port(80);				// Change back the port to the default
@@ -192,7 +216,8 @@ void loop()
 						//send error
 						#if defined DEBUG_serial
 						mem_check ();
-						Serial.println ("too much retries");
+						SerialFlashPrintln (loop1);
+						//Serial.println ("too much retries");
 						#endif
 						program_state = START;
 					}
@@ -202,7 +227,8 @@ void loop()
 			
 			case PRINT_LABEL:{
 				#if defined DEBUG_serial
-				Serial.println("Set IP/port to printer");
+				SerialFlashPrintln (loop3);
+				// Serial.println("Set IP/port to printer");
 				#endif
 				set_server_ip(config.printer_IP);			// Change IP to the next client
 				set_server_port(config.printer_port);			// Change port to the next client

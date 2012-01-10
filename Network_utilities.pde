@@ -15,6 +15,15 @@ void Enable_Ethernet () {
 	#endif
 }
 
+prog_uchar dhcp1[] PROGMEM  = {"Discovering servers."};
+prog_uchar dhcp2[] PROGMEM  = {"Requesting lease."};
+prog_uchar dhcp3[] PROGMEM  = {"Renewing lease."};
+prog_uchar dhcp4[] PROGMEM  = {"Obtained lease!"};
+
+prog_uchar dhcp5[] PROGMEM  = {"My IP address is "};
+prog_uchar dhcp6[] PROGMEM  = {"Gateway IP address is "};
+prog_uchar dhcp7[] PROGMEM  = {"DNS IP address is "};
+			
 int Ethernet_mantain_connection() {
 	static DhcpState prevState = DhcpStateNone;
 	static unsigned long prevTime = 0;
@@ -34,26 +43,30 @@ int Ethernet_mantain_connection() {
 	#if defined DEBUG_serial
 	Serial.println();
 	#endif
-	
+
 		switch (state) {
 		  case DhcpStateDiscovering:
 			#if defined DEBUG_serial
-			Serial.print("Discovering servers.");
+			SerialFlashPrint (dhcp1);
+			// Serial.print("Discovering servers.");
 			#endif
 			break;
 		  case DhcpStateRequesting:
 			#if defined DEBUG_serial
-			Serial.print("Requesting lease.");
+			SerialFlashPrint (dhcp2);
+			//Serial.print("Requesting lease.");
 			#endif
 			break;
 		  case DhcpStateRenewing:
 			#if defined DEBUG_serial
-			Serial.print("Renewing lease.");
+			SerialFlashPrint (dhcp3);
+			//Serial.print("Renewing lease.");
 			#endif
 			break;
 		  case DhcpStateLeased: {
 			#if defined DEBUG_serial
-			Serial.println("Obtained lease!");
+			SerialFlashPrintln (dhcp4);
+			//Serial.println("Obtained lease!");
 			
 			// Since we're here, it means that we now have a DHCP lease, so we
 			// print out some information.
@@ -61,15 +74,18 @@ int Ethernet_mantain_connection() {
 			const byte* gatewayAddr = EthernetDHCP.gatewayIpAddress();
 			const byte* dnsAddr = EthernetDHCP.dnsIpAddress();
 			
-			
-			Serial.print("My IP address is ");
+			SerialFlashPrint (dhcp5);
+			//Serial.print("My IP address is ");
 			Serial.println(ip_to_str(ipAddr));
 			
-			Serial.print("Gateway IP address is ");
+			SerialFlashPrint (dhcp6);
+			//Serial.print("Gateway IP address is ");
 			Serial.println(ip_to_str(gatewayAddr));
 
-			Serial.print("DNS IP address is ");
+			SerialFlashPrint (dhcp7);
+			//Serial.print("DNS IP address is ");
 			Serial.println(ip_to_str(dnsAddr));
+			Serial.println ("");
 			#endif
 
 			// You will often want to set your own DNS server IP address (that is
@@ -103,10 +119,17 @@ int Ethernet_mantain_connection() {
 
 
 
+prog_uchar dns1[] PROGMEM  = {"Discovering servers."};
+prog_uchar dns2[] PROGMEM  = {"The IP address is "};
+prog_uchar dns3[] PROGMEM  = {"Timed out."};
+prog_uchar dns4[] PROGMEM  = {"Does not exist."};
+prog_uchar dns5[] PROGMEM  = {"Failed with error code "};
+
 void get_ip_from_dns_name(char* pointer_hostName, byte* pointer_IPaddr) {
 
 	#if defined DEBUG_serial
-	Serial.print("Resolving ");
+	SerialFlashPrintln (dns1);
+	//Serial.print("Resolving ");
 	Serial.print(pointer_hostName);
 	Serial.print(".");
 	#endif
@@ -148,24 +171,28 @@ void get_ip_from_dns_name(char* pointer_hostName, byte* pointer_IPaddr) {
 	// EthernetDNS.h
 	if (DNSSuccess == err) {
 		#if defined DEBUG_serial
-		Serial.print("The IP address is ");
+		SerialFlashPrint (dns2);
+		//Serial.print("The IP address is ");
 		Serial.print(ip_to_str(pointer_IPaddr));
 		Serial.println(".");
 		#endif
 		got_ip = true;
 	} else if (DNSTimedOut == err) {
 		#if defined DEBUG_serial
-		Serial.println("Timed out.");
+		SerialFlashPrint (dns3);
+		//Serial.println("Timed out.");
 		#endif
 		got_ip = false;
 	} else if (DNSNotFound == err) {
 		#if defined DEBUG_serial
-		Serial.println("Does not exist.");
+		SerialFlashPrint (dns4);
+		//Serial.println("Does not exist.");
 		#endif
 		got_ip = false;
 	} else {
 		#if defined DEBUG_serial
-		Serial.print("Failed with error code ");
+		SerialFlashPrint (dns5);
+		//Serial.print("Failed with error code ");
 		Serial.print((int)err, DEC);
 		Serial.println(".");
 		#endif
@@ -192,20 +219,27 @@ void set_server_port(uint16_t port) {
 #define number_of_retris 5
 unsigned int retris = 0;
 
+prog_uchar eth1[] PROGMEM  = {"Connecting to the server."};
+prog_uchar eth2[] PROGMEM  = {"Connected."};
+prog_uchar eth3[] PROGMEM  = {"Connection failed."};
+
 boolean Ethernet_open_connection () {
 	#if defined DEBUG_serial
-	Serial.println("connecting to the server");
+	SerialFlashPrintln (eth1);
+	//Serial.println("connecting to the server");
 	delay (100);
 	#endif
 	if (client.connect()) {  //_ip,_port
 		#if defined DEBUG_serial
-		Serial.println("connected");
+		SerialFlashPrintln (eth2);
+		//Serial.println("connected");
 		#endif
 		return true;
 	} else {
 		// kf you didn't get a connection to the server:
 		#if defined DEBUG_serial
-		Serial.println("connection failed");
+		SerialFlashPrintln (eth3);
+		//Serial.println("connection failed");
 		#endif
 		// Double check for too many tries
 		retris ++;
@@ -250,9 +284,16 @@ void generate_label () {
 }
 
 
+prog_uchar response1[] PROGMEM  = {"waiting for response."};
+prog_uchar response2[] PROGMEM  = {"\nTime Out!"};
+prog_uchar response3[] PROGMEM  = {"\nserver closed session."};
+prog_uchar response4[] PROGMEM  = {"received data: "};
+
+
 void getResponse(){  
 	#if defined DEBUG_serial
-	Serial.print("waiting for response.");
+	SerialFlashPrintln (response1);
+	//Serial.print("waiting for response.");
 	#endif
 	unsigned int timeoutCounter = 0;
 	while (!client.available()) {
@@ -264,7 +305,8 @@ void getResponse(){
 		timeoutCounter ++;
 		if (timeoutCounter > (15000/200)) {		// If greater than 15 seconds
 			#if defined DEBUG_serial
-			Serial.print("\nTime Out!");
+			SerialFlashPrintln (response2);
+			//Serial.print("\nTime Out!");
 			#endif
 			send_command (00);			// Indicates function was not completed 
 			send_error (01);			// Indicates the error type generateds
@@ -283,9 +325,11 @@ void getResponse(){
 	// if the server's disconnected, stop the client:
 	if (!client.connected()) {
 		#if defined DEBUG_serial
-		Serial.println("\nserver closed session.");
+		SerialFlashPrintln (response3);
+		//Serial.println("\nserver closed session.");
 		if (received_data) {
-			Serial.print("received data: ");
+			SerialFlashPrintln (response4);
+			//Serial.print("received data: ");
 			Serial.println(dataRec);
 		}
 		#endif
@@ -298,6 +342,8 @@ void getResponse(){
 		resetState ();				// Resets all variables in order to get to the beginin of the code.
 	}
 }
+
+prog_uchar print_label1[] PROGMEM  = {"\nPrinter request sended!!"};
 
 void print_label () {
 	
@@ -318,13 +364,18 @@ void print_label () {
 	delay (100);
 	
 	#if defined DEBUG_serial
-	Serial.println("\nPrinter request sended!!");
+	SerialFlashPrintln (print_label1);
+	//Serial.println("\nPrinter request sended!!");
 	#endif
 }
 
+prog_uchar stopEthernet1[] PROGMEM  = {"Stoping ethernet."};
+prog_uchar stopEthernet2[] PROGMEM  = {"Ethernet stoped."};
+
 void stopEthernet(){
 	#if defined DEBUG_serial
-	Serial.println("Stoping ethernet.");
+	SerialFlashPrintln (stopEthernet1);
+	//Serial.println("Stoping ethernet.");
 	#endif
 	
 	client.stop();
@@ -334,7 +385,8 @@ void stopEthernet(){
 	connected = false;
 	
 	#if defined DEBUG_serial
-	Serial.println("Ethernet stoped.");
+	SerialFlashPrintln (stopEthernet2);
+	//Serial.println("Ethernet stoped.");
 	#endif
 }
 
@@ -347,13 +399,17 @@ const char* ip_to_str(const uint8_t* ipAddr)
 	return buf;
 }
 
+prog_uchar freemem1[] PROGMEM  = {"Memory available: ["};
+prog_uchar freemem2[] PROGMEM  = {" bytes]"};
 
 /***** Checks free ram and prints it serial *****/
 void mem_check () {
 	//checking memory:
-	Serial.print("Memory available: [");
+	SerialFlashPrint (freemem1);
+	// Serial.print("Memory available: [");
 	Serial.print(freeRam());
-	Serial.println(" bytes]");
+	SerialFlashPrintln (freemem2);
+	// Serial.println(" bytes]");
 }
 
 /***** Returns free ram *****/
@@ -389,17 +445,34 @@ get IP from it
 done!
 */
 		
+prog_uchar fetchconfig1[] PROGMEM  = {"IP of UI server retrieved!\nSet IP to UI server\nSet port 80"};
 
 // once the Ethernet is configured we can retrieve all configuration from the server
 boolean fetch_configuration () {
 	byte retries1 = 0;
-	while (retries < 10) {
+	boolean done_it = false;
+	while (retries1 < 10) {
+		#if defined NO_DNS
+		got_ip = true;
+		#endif
 		if (got_ip) {
-			#if defined DEBUG_serial
-			Serial.println("IP of UI server retrieved!");
-			#endif
-			set_server_ip(server_ipAddr);		// Refresh the IP addres to connect to
-			set_server_port(80);				// Change back the port to the default
+			if (!done_it) {
+				#if defined DEBUG_serial
+				SerialFlashPrintln (fetchconfig1);
+				// Serial.println("IP of UI server retrieved!");
+				#endif
+				#if defined NO_DNS
+				server_ipAddr[0]=95;
+				server_ipAddr[1]=211;
+				server_ipAddr[2]=54;
+				server_ipAddr[3]=66;
+				set_server_ip(server_ipAddr);		// Refresh the IP addres to connect to
+				#else
+				set_server_ip(server_ipAddr);		// Refresh the IP addres to connect to
+				#endif
+				set_server_port(80);				// Change back the port to the default
+				done_it = true;
+			}
 			
 			if (!connected) {	// open connection and send petition of all configuration data (exclude positions)
 				connected = Ethernet_open_connection ();		// Try to open connection
@@ -429,6 +502,7 @@ boolean fetch_configuration () {
 	return false;
 	
 	
+
 	
 	
 	//now we can get the conficuration

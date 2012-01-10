@@ -54,17 +54,17 @@ void XML_pharser() {
 void record_data (char input, char* strgdata_Result ) {
   if (strlen(strgdata_Result)== max_data_leng ) {
     //Serial.println (" Reached the data max lengh, we reset the tag" );
-    reset_data();
+    reset_data(dataRec);
   }else{
     strgdata_Result[strlen(strgdata_Result)]=input;
   }
 }
 
-void reset_data() {    // Reset Data String
+void reset_data(char* data_in) {    // Reset Data String
   //Clean string
-  int len = strlen(dataRec);
+  int len = strlen(data_in);
   for (int c = 0; c < len; c++) {
-    dataRec[c] = 0;
+    data_in[c] = 0;
   }
 }
 
@@ -92,7 +92,7 @@ void process_tag(char* tag_in) {
   for (int i=0; i < numberOfTags; i++) {    // We compare the TAG we got with our desired TAGs
     if (!strcmp(tag_in,myTagStrings[i])) {  // If we have a match...
       got_match = true;                     // We rise the flag
-	  LastTagNumber = i;
+	  LastTagNumber = i + 1;				// 0 is reserved for NO TAG
 	  received_data = true;					// Flag for the outside code know we got a match (this wont be reset inside XML handler)
     }
   }
@@ -111,23 +111,185 @@ void process_tag(char* tag_in) {
 
 
 // Process data gathered
+#define DB_row 1
 
-void process_data(char* data_in) {
+prog_uchar procesD1[] PROGMEM  = {"server_address different and recorded!"};
+prog_uchar procesD2[] PROGMEM  = {"server_address is the same"};
+
+void process_data(char* data_in) {	
+	//Got a valid tag!
 	if (LastTagNumber == 0) {
 		// false alarm, no data to process
 	}else{
+		// Tag is valid, processing!
 		switch (LastTagNumber) {
 			// process data here only if its configuration, other data is processed elsewhere...
-			case 1:		// Tag 1
-				// bla bla
-				// compare data from the eeprom
-				// is different?
-				// store data in eeprom
-				// eslse nothing
-			break;
+			
+			// We point our temporal container to the data we want to change
+			case 1:	{	// Tag 1 SA (Batch Server address in DNS form)
+				if (strcmp(data_in,config.server_address)) {		// If data is different from the eeprom
+					// store data in eeprom
+					#if defined DEBUG_serial
+					SerialFlashPrintln (procesD1);
+					#endif
+					sprintf(config.server_address, data_in);
+					db.write(DB_row, DB_REC config);
+				}else{
+					#if defined DEBUG_serial
+					SerialFlashPrintln (procesD2);
+					#endif
+				}
+			break; }
+			
+			case 2:	{	// Tag 1 SS (Batch Server Script)
+				if (strcmp(data_in,config.server_script)) {		// If data is different from the eeprom
+					// store data in eeprom
+					#if defined DEBUG_serial
+					// Serial.print("server_address different and recorded!");
+					SerialFlashPrintln (procesD1);
+					#endif
+					sprintf(config.server_script, data_in);
+					db.write(DB_row, DB_REC config);
+				}else{
+					#if defined DEBUG_serial
+					SerialFlashPrintln (procesD2);
+					#endif
+				}
+			break;}
+			
+			case 3:	{	// Tag 3 PS (Password)
+				if (strcmp(data_in,config.password)) {		// If data is different from the eeprom
+					// store data in eeprom
+					#if defined DEBUG_serial
+					// Serial.print("server_address different and recorded!");
+					SerialFlashPrintln (procesD1);
+					#endif
+					sprintf(config.password, data_in);
+					db.write(DB_row, DB_REC config);
+				}else{
+					#if defined DEBUG_serial
+					SerialFlashPrintln (procesD2);
+					#endif
+				}
+			break;}
+			
+			case 4:	{	// Tag 3 PP (Printer port)
+				// convert data in into integuer
+				int num = 0;
+				for (int i = (strlen(data_in)-2); i>=0 ; i--) {
+					num = atoi(&data_in[i]);
+				}
+				// Compare and store
+				if (num != config.printer_port) {		// If data is different from the eeprom
+					// store data in eeprom
+					#if defined DEBUG_serial
+					// Serial.print("server_address different and recorded!");
+					SerialFlashPrintln (procesD1);
+					#endif
+					config.printer_port = num;
+					db.write(DB_row, DB_REC config);
+				}else{
+					#if defined DEBUG_serial
+					SerialFlashPrintln (procesD2);
+					#endif
+				}
+			break;}
+			
+			case 5:	{	// Tag IP1
+				// convert data in into integuer
+				int num = 0;
+				for (int i = (strlen(data_in)-1); i>=0 ; i--) {
+					num = atoi(&data_in[i]);
+				}
+				// Compare and store
+				if (num != config.printer_IP[0]) {		// If data is different from the eeprom
+					// store data in eeprom
+					#if defined DEBUG_serial
+					// Serial.print("server_address different and recorded!");
+					SerialFlashPrintln (procesD1);
+					#endif
+					config.printer_IP[0] = num;
+					db.write(DB_row, DB_REC config);
+				}else{
+					#if defined DEBUG_serial
+					SerialFlashPrintln (procesD2);
+					#endif
+				}
+			break;}
+			
+			case 6:	{	// Tag IP2
+				// convert data in into integuer
+				int num = 0;
+				for (int i = (strlen(data_in)-1); i>=0 ; i--) {
+					num = atoi(&data_in[i]);
+				}
+				// Compare and store
+				if (num != config.printer_IP[1]) {		// If data is different from the eeprom
+					// store data in eeprom
+					#if defined DEBUG_serial
+					// Serial.print("server_address different and recorded!");
+					SerialFlashPrintln (procesD1);
+					#endif
+					config.printer_IP[1] = num;
+					db.write(DB_row, DB_REC config);
+				}else{
+					#if defined DEBUG_serial
+					SerialFlashPrintln (procesD2);
+					#endif
+				}
+			break;}
+			
+			case 7:	{	// Tag IP3
+				// convert data in into integuer
+				byte num = 0;
+				for (int i = (strlen(data_in)-1); i>=0 ; i--) {
+					num = atoi(&data_in[i]);
+				}
+				// Compare and store
+				if (num != config.printer_IP[2]) {		// If data is different from the eeprom
+					// store data in eeprom
+					#if defined DEBUG_serial
+					// Serial.print("server_address different and recorded!");
+					SerialFlashPrintln (procesD1);
+					#endif
+					config.printer_IP[2] = num;
+					db.write(DB_row, DB_REC config);
+				}else{
+					#if defined DEBUG_serial
+					SerialFlashPrintln (procesD2);
+					#endif
+				}
+			break;}
+			
+			case 8:	{	// Tag IP4
+				// convert data in into integuer
+				byte num = 0;
+				for (int i = (strlen(data_in)-1); i>=0 ; i--) {
+					num = atoi(&data_in[i]);
+				}
+				// Compare and store
+				if (num != config.printer_IP[3]) {		// If data is different from the eeprom
+					// store data in eeprom
+					#if defined DEBUG_serial
+					// Serial.print("server_address different and recorded!");
+					SerialFlashPrintln (procesD1);
+					#endif
+					config.printer_IP[3] = num;
+					db.write(DB_row, DB_REC config);
+				}else{
+					#if defined DEBUG_serial
+					SerialFlashPrintln (procesD2);
+					#endif
+				}
+			break;}
+	
+			
 		}
 	}
 }
+
+//	"<SA>", "<SS>", "<PS>", "<PP>",
+//	"<IP1>", "<IP2>", "<IP3>", "<IP4>",
 
 void clean_data(char* data_in) {
 	//Clean data
@@ -136,4 +298,3 @@ void clean_data(char* data_in) {
 		data_in[c] = 0;
 	}
 }
-

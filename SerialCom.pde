@@ -262,12 +262,17 @@ void send_data () {
 // Common functions
 //////////////////////////
 
+prog_uchar waitpcommand1[] PROGMEM  = {"Waiting command (C04)"};
+prog_uchar waitpcommand2[] PROGMEM  = {"Starting process print label "};
+prog_uchar waitpcommand3[] PROGMEM  = {"NOT *C04* or *C03* command: "};
+
 int wait_for_print_command () {
 	// Waiting for a comand to be received (default print command 04) as we already configured printer.
 		
 	#if defined DEBUG_serial
 	mem_check ();
-	Serial.println("Waiting command (C04)");
+	SerialFlashPrintln (waitpcommand1);
+	// Serial.println("Waiting command (C04)");
 	#endif
 	
 	boolean command_received = false;
@@ -276,7 +281,8 @@ int wait_for_print_command () {
 		if (last_command_received == 04) {				// Petition of configuration all correct.
 			send_command (1);
 			#if defined DEBUG_serial
-			Serial.println ("Starting process print label ");
+			SerialFlashPrintln (waitpcommand2);
+			// Serial.println ("Starting process print label ");
 			#endif
 			command_received = true;
 			return last_command_received;
@@ -289,7 +295,8 @@ int wait_for_print_command () {
 		} else {		// Not the command we are expecting, wait for the good comand
 			// send error, (not expected command); (E10)
 			#if defined DEBUG_serial
-			Serial.print("NOT *C04* or *C03* command: ");
+			SerialFlashPrintln (waitpcommand3);
+			// Serial.print("NOT *C04* or *C03* command: ");
 			Serial.println(last_command_received);
 			#endif
 		}
@@ -565,3 +572,28 @@ void receive_printer_IP () {
 	#endif
 }
 */
+
+// function to print string from flash memory (with end carriage return)
+void SerialFlashPrintln (prog_uchar* text_string) {
+	char buffer;
+	unsigned int a = 0;
+	while (true) {
+		buffer =  pgm_read_byte_near(text_string + a);
+		if (buffer == '\0') break;
+		Serial.print(buffer);
+		a++;
+	}
+	Serial.println("");
+}
+
+// function to print string from flash memory (without end carriage return)
+void SerialFlashPrint (prog_uchar* text_string) {
+	char buffer;
+	unsigned int a = 0;
+	while (true) {
+		buffer =  pgm_read_byte_near(text_string + a);
+		if (buffer == '\0') break;
+		Serial.print(buffer);
+		a++;
+	}
+}

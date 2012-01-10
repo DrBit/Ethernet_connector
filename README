@@ -4,6 +4,12 @@
 *********************************************
 **  REVISIONS
 **
+**  V1.3.1 - 09/01/2012
+**  * Added function to print string from FLASH instead of SRAM memory
+**  * Augmented buffer for receiving XML tags from Web
+**  * Starting process of converting text string into FLASH memory
+**  * Successfully fetchen configuration information from the server and recorded into eeprom
+**
 **  V1.3 - 08/01/2012
 **  * Implemented recording of configuration in eeprom
 **  * Improved code to save memory
