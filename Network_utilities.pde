@@ -1,4 +1,5 @@
 
+prog_uchar enEth1[] PROGMEM  = {"DHCP begin..."};
 
 void Enable_Ethernet () {
 	// Initiate a DHCP session. The argument is the MAC (hardware) address that
@@ -11,7 +12,8 @@ void Enable_Ethernet () {
 	// renewing your lease.
 	EthernetDHCP.begin(mac, 1);
 	#if defined DEBUG_serial
-	Serial.println("DHCP begin..."); 
+	SerialFlashPrintln (enEth1);
+	// Serial.println("DHCP begin..."); 
 	#endif
 }
 
@@ -119,7 +121,7 @@ int Ethernet_mantain_connection() {
 
 
 
-prog_uchar dns1[] PROGMEM  = {"Discovering servers."};
+prog_uchar dns1[] PROGMEM  = {"Resolving host: "};
 prog_uchar dns2[] PROGMEM  = {"The IP address is "};
 prog_uchar dns3[] PROGMEM  = {"Timed out."};
 prog_uchar dns4[] PROGMEM  = {"Does not exist."};
@@ -128,7 +130,7 @@ prog_uchar dns5[] PROGMEM  = {"Failed with error code "};
 void get_ip_from_dns_name(char* pointer_hostName, byte* pointer_IPaddr) {
 
 	#if defined DEBUG_serial
-	SerialFlashPrintln (dns1);
+	SerialFlashPrint (dns1);
 	//Serial.print("Resolving ");
 	Serial.print(pointer_hostName);
 	Serial.print(".");
@@ -163,7 +165,7 @@ void get_ip_from_dns_name(char* pointer_hostName, byte* pointer_IPaddr) {
 		} while (DNSTryLater == err);
 	}
 	#if defined DEBUG_serial
-	Serial.println();
+	Serial.println("");
 	#endif
 	// Finally, we have a result. We're just handling the most common errors
 	// here (success, timed out, not found) and just print others as an
@@ -263,36 +265,15 @@ void resetState () {
 }
 
 
-void generate_label () {
-
-	client.print("GET ");
-	client.print(config.server_script);
-	client.print(seeds_batch);
-	client.println(" HTTP/1.0");
-	
-	client.print("Authorization: Basic ");
-	client.println(config.password);    //user:password -> encoded in base64 -> http://maxcalci.com/base64.html
-	
-	client.print("Host: ");
-	client.println(config.server_address);
-	
-	client.print("User-Agent: Arduino SeedCounter Client ");
-	client.println(_version);
-	
-	client.println();
-	delay (100);
-}
-
-
 prog_uchar response1[] PROGMEM  = {"waiting for response."};
 prog_uchar response2[] PROGMEM  = {"\nTime Out!"};
 prog_uchar response3[] PROGMEM  = {"\nserver closed session."};
-prog_uchar response4[] PROGMEM  = {"received data: "};
+prog_uchar response4[] PROGMEM  = {"Latest data received: "};
 
 
 void getResponse(){  
 	#if defined DEBUG_serial
-	SerialFlashPrintln (response1);
+	SerialFlashPrint (response1);
 	//Serial.print("waiting for response.");
 	#endif
 	unsigned int timeoutCounter = 0;
@@ -345,6 +326,7 @@ void getResponse(){
 
 prog_uchar print_label1[] PROGMEM  = {"\nPrinter request sended!!"};
 
+/*
 void print_label () {
 	
 	client.print("GET /");
@@ -356,8 +338,7 @@ void print_label () {
 	client.print(":");
 	client.println(config.printer_port);
 	
-	client.print("User-Agent: Arduino SeedCounter Client ");
-	client.println(_version);
+	Print_client ();
 	
 	client.println("");
 	
@@ -367,7 +348,7 @@ void print_label () {
 	SerialFlashPrintln (print_label1);
 	//Serial.println("\nPrinter request sended!!");
 	#endif
-}
+}*/
 
 prog_uchar stopEthernet1[] PROGMEM  = {"Stoping ethernet."};
 prog_uchar stopEthernet2[] PROGMEM  = {"Ethernet stoped."};
@@ -445,7 +426,7 @@ get IP from it
 done!
 */
 		
-prog_uchar fetchconfig1[] PROGMEM  = {"IP of UI server retrieved!\nSet IP to UI server\nSet port 80"};
+prog_uchar fetchconfig1[] PROGMEM  = {"Set IP \nSet port 80"};
 
 // once the Ethernet is configured we can retrieve all configuration from the server
 boolean fetch_configuration () {
@@ -478,7 +459,9 @@ boolean fetch_configuration () {
 				connected = Ethernet_open_connection ();		// Try to open connection
 			}else{
 				// Send GET petition to get configuration data
-				HTTP_get_config ();						// Send request to generate label
+				// HTTP_get_config ();						// Send request to generate label
+				char update_script [] ="/arduino/get/id/1/data/table=configuration;getallfields";
+				get_HTTP (update_script, config.ui_server);
 				getResponse();							// Pharse all data received and update if necessary
 				if (got_response) {
 					stopEthernet();
@@ -500,10 +483,6 @@ boolean fetch_configuration () {
 		retries1++;
 	}
 	return false;
-	
-	
-
-	
 	
 	//now we can get the conficuration
 	//TODO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  
@@ -641,6 +620,7 @@ boolean fetch_configuration () {
 	
 	// ALL positions
 
+	/*
 void HTTP_get_config () {
 
 	client.print("GET /arduino/get/id/1/data/table=configuration;getallfields");
@@ -648,6 +628,76 @@ void HTTP_get_config () {
 	
 	client.print("Host: ");
 	client.println(config.ui_server);
+	
+	Print_client ();
+	
+	client.println();
+	delay (100);
+}*/
+
+/*
+void HTTP_get_positions () {
+
+	client.print("GET /arduino/get/id/1/data/table=configuration;getallfields");
+	client.println(" HTTP/1.0");
+	
+	client.print("Host: ");
+	client.println(config.ui_server);
+	
+	Print_client ();
+	
+	client.println();
+	delay (100);
+}*/
+
+
+
+void get_HTTP (char* address,char* host) {
+
+	client.print("GET ");
+	client.print(address);
+	client.println(" HTTP/1.0");
+	
+	client.print("Host: ");
+	client.println(host);
+	
+	client.print("User-Agent: Arduino SeedCounter Client ");
+	client.println(_version);
+	
+	client.println();
+	delay (100);
+} 
+
+void get_HTTP (char* address,char* host, unsigned int port) {
+
+	client.print("GET ");
+	client.print(address);
+	client.println(" HTTP/1.0");
+	
+	client.print("Host: ");
+	client.println(host);
+	client.print(":");
+	client.println(port);
+	
+	client.print("User-Agent: Arduino SeedCounter Client ");
+	client.println(_version);
+	
+	client.println();
+	delay (100);
+}
+
+void generate_label () {
+
+	client.print("GET ");
+	client.print(config.server_script);
+	client.print(seeds_batch);
+	client.println(" HTTP/1.0");
+	
+	client.print("Authorization: Basic ");
+	client.println(config.password);    //user:password -> encoded in base64 -> http://maxcalci.com/base64.html
+	
+	client.print("Host: ");
+	client.println(config.server_address);
 	
 	client.print("User-Agent: Arduino SeedCounter Client ");
 	client.println(_version);
@@ -665,6 +715,3 @@ boolean is_UI_server_alive () {
 	return true;
 }
 
-void update_DNS_eeprom () {
-	// Update eeprom if different value
-}

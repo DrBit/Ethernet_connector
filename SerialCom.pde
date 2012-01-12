@@ -265,6 +265,7 @@ void send_data () {
 prog_uchar waitpcommand1[] PROGMEM  = {"Waiting command (C04)"};
 prog_uchar waitpcommand2[] PROGMEM  = {"Starting process print label "};
 prog_uchar waitpcommand3[] PROGMEM  = {"NOT *C04* or *C03* command: "};
+prog_uchar waitpcommand4[] PROGMEM  = {"Starting process fetch and send positions "};
 
 int wait_for_print_command () {
 	// Waiting for a comand to be received (default print command 04) as we already configured printer.
@@ -292,6 +293,12 @@ int wait_for_print_command () {
 			send_command (1);
 			// get_configuration ();
 			// command_received = true;
+		} else if (last_command_received == 18) {		// Petition to configure printer
+			send_command (1);
+			#if defined DEBUG_serial
+			SerialFlashPrintln (waitpcommand4);
+			#endif
+			return last_command_received;
 		} else {		// Not the command we are expecting, wait for the good comand
 			// send error, (not expected command); (E10)
 			#if defined DEBUG_serial
@@ -306,6 +313,9 @@ int wait_for_print_command () {
 
 // INIT comunication with the arduino MEGA
 
+prog_uchar open_comA1[] PROGMEM  = {"NOT *C01* command: "};
+prog_uchar open_comA2[] PROGMEM  = {"\nModule ready!"};
+
 void open_comunication_with_arduino () {
 	send_command (5);		// To indicate we are ready to start
 	
@@ -318,7 +328,8 @@ void open_comunication_with_arduino () {
 			send_command (2);	// indicates ther is an error
 			send_error (3);		// send error, Expected command (C01) (confirmation)
 			#if defined DEBUG_serial
-			Serial.print("NOT *C01* command: ");
+			SerialFlashPrintln (open_comA1);
+			// Serial.print("NOT *C01* command: ");
 			Serial.println(last_command_received);
 			#endif
 		}
@@ -327,7 +338,8 @@ void open_comunication_with_arduino () {
 	// confirmation received
 	// comunication open and ready!
 	#if defined DEBUG_serial
-	Serial.print("Module ready!");
+	// Serial.println("/nModule ready!");
+	SerialFlashPrintln (open_comA2);
 	#endif
 }
 

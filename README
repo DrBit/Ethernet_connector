@@ -4,6 +4,14 @@
 *********************************************
 **  REVISIONS
 **
+**  V1.4 - 12/01/2012
+**  * Added functionality to fetch all positions
+**  * Beginning proces of sending positions to arduino MEGA via serial interface
+**  * Implemented HTTP get function to save mamory
+**
+**  V1.3.2 - 09/01/2012
+**  * Completed memory optimitzation, 1k of SRAM free at starting moment
+**  
 **  V1.3.1 - 09/01/2012
 **  * Added function to print string from FLASH instead of SRAM memory
 **  * Augmented buffer for receiving XML tags from Web

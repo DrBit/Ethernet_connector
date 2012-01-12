@@ -25,29 +25,41 @@ void read_records_entry1 ()
 	#endif
 }
 
+prog_uchar showall1[] PROGMEM  = {"Number of records in DB: "};
+prog_uchar showall2[] PROGMEM  = {"\nDATA RECORDED IN INTERNAL MEMORY:"};
+prog_uchar showall3[] PROGMEM  = {"Memory position: "};
+prog_uchar showall4[] PROGMEM  = {" * server_address SA: "};
+prog_uchar showall5[] PROGMEM  = {" * server_script SS: "};
+prog_uchar showall6[] PROGMEM  = {" * printer_IP IP: "};
+prog_uchar showall7[] PROGMEM  = {" * printer_port PP: "};
+prog_uchar showall8[] PROGMEM  = {" * password PS: "};
+prog_uchar showall9[] PROGMEM  = {" * User interface (UI) Server US: "};
+prog_uchar showall10[] PROGMEM  = {" * Machine ID MI: "};
+prog_uchar showall11[] PROGMEM  = {"-----"};
+
 
 void Show_all_records()
 {
 	#if defined DEBUG_serial
-	Serial.print("Number of records in DB: ");Serial.println(db.nRecs(),DEC);
-	if (db.nRecs()) Serial.println("\nDATA RECORDED IN INTERNAL MEMORY:");
+	SerialFlashPrint (showall1);;Serial.println(db.nRecs(),DEC);
+	if (db.nRecs()) SerialFlashPrintln (showall2);
 	for (int i = 1; i <= db.nRecs(); i++)
 	{
 		db.read(i, DB_REC config);
-		Serial.print("Memory position: "); Serial.println(i); 
-		Serial.print(" * server_address SA: "); Serial.println(config.server_address);
-		Serial.print(" * server_script SS: "); Serial.println(config.server_script);
-		Serial.print(" * printer_IP IP: "); Serial.println(ip_to_str(config.printer_IP));
-		Serial.print(" * printer_port PP: "); Serial.println(config.printer_port);
-		Serial.print(" * password PS: "); Serial.println(config.password);
-		Serial.print(" * User interface (UI) Server US: "); Serial.println(config.ui_server);
-		Serial.print(" * Machine ID MI: "); Serial.println((int)config.machine_id);
+		SerialFlashPrint (showall3); Serial.println(i); 
+		SerialFlashPrint (showall4); Serial.println(config.server_address);
+		SerialFlashPrint (showall5); Serial.println(config.server_script);
+		SerialFlashPrint (showall6); Serial.println(ip_to_str(config.printer_IP));
+		SerialFlashPrint (showall7); Serial.println(config.printer_port);
+		SerialFlashPrint (showall8); Serial.println(config.password);
+		SerialFlashPrint (showall9); Serial.println(config.ui_server);
+		SerialFlashPrint (showall10); Serial.println((int)config.machine_id);
 	} 
-	Serial.println("-----");
+	SerialFlashPrintln (showall11);
 	#endif
 }
 
-
+/*
 void manual_data_write () {
 	
 	
@@ -76,7 +88,7 @@ void manual_data_write () {
 	 
 	
 	//Show_all_records();
-}
+}*/
 
 
 

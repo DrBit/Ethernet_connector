@@ -10,7 +10,7 @@
 
 #define ID             1    //incase you have more than 1 unit on same network, just change the unit ID to other number
 
-#define _version "V1.3.1"
+#define _version "V1.4"
 
 ///////////////////////
 // NETWORK UTILITIES
@@ -33,6 +33,9 @@
 #define max_data_leng 110		// Max leng of tag
 #define numberOfTags 20			// Define the number of tags we are gona use (remember last one is /0)
 
+#define numberOfPostitions 20	// Define the number of positions we would look for when updating.
+// This value should be included in the server to make it easier to update
+
 //VARs
 const char* myTagStrings[numberOfTags]={
 
@@ -41,8 +44,10 @@ const char* myTagStrings[numberOfTags]={
 	"<response>"
 };   // Array of tags
 
+
 // Keep non configuration tags at the end of the chain (like response)
 byte LastTagNumber = 0;			// Container where we store last found tag
+byte LastPosTagNumber = 0;		// Container where we sotre last found position tag
 char tagRec[max_tag_leng];		// Var containg the tag
 char dataRec[max_data_leng];	// Var containg the data  
 
@@ -63,6 +68,7 @@ struct MyRec {
 	char password[30];				// example: YXJkdWlubzpQQXBhWXViQTMzd3I=
 	char ui_server[25];				// example: robot.eric.nr1net.corp
 	byte machine_id;				// example: 1
+	//byte numberOfPostitions;		// example: 20
 } config;
 // When changing the structure data in the eeprom needs to be rewritten
 
@@ -158,7 +164,7 @@ void loop()
 					// Has changed? then get data and update
 					// try again
 					
-					if (retries >= 2) {
+					if (retries >= 3) {
 						//send error
 						#if defined DEBUG_serial
 						mem_check ();
@@ -179,10 +185,10 @@ void loop()
 				if (next_order == 4) {
 					program_state = GET_LABEL;			// Wait until the counter sends us the command to print a label
 				}
-				if (next_order == 5) { 
+				if (next_order == 18) { 
 					program_state = UPDATE_POSITIONS;		// Wait until the counter sends us the command to print a label
 				}
-				program_state = GET_LABEL;
+				// program_state = GET_LABEL;
 				// here comes update positions for mega
 			break;}
 			
@@ -236,7 +242,11 @@ void loop()
 				if (!connected) {
 					connected = Ethernet_open_connection ();
 				}else {  // Open connection
-					print_label ();							// Send request to print the label
+					sprintf(dataRec, "/%s",dataRec);		// Add missing sing before the string
+					char temporal_ip [15];
+					sprintf(temporal_ip, ip_to_str(config.printer_IP));
+					get_HTTP (dataRec, temporal_ip, config.printer_port);
+					// print_label ();							// Send request to print the label
 					send_command (06);						// Completed successfully
 					program_state = START;					// Goes to the start 
 					stopEthernet();
@@ -247,6 +257,54 @@ void loop()
 				// answer mega with confirm? or its already done?
 				// get all positions from website UI
 				// pass them to arduino Mega
+				boolean done_it = false;
+				byte retries1 = 0;
+				while (retries1 < 10) {
+					#if defined NO_DNS
+					got_ip = true;
+					#endif
+					if (got_ip) {
+						if (!done_it) {
+							#if defined NO_DNS
+							server_ipAddr[0]=95;
+							server_ipAddr[1]=211;
+							server_ipAddr[2]=54;
+							server_ipAddr[3]=66;
+							set_server_ip(server_ipAddr);		// Refresh the IP addres to connect to
+							#else
+							set_server_ip(server_ipAddr);		// Refresh the IP addres to connect to
+							#endif
+							set_server_port(80);				// Change back the port to the default
+							done_it = true;
+						}
+						
+						if (!connected) {	// open connection and send petition of all configuration data (exclude positions)
+							connected = Ethernet_open_connection ();		// Try to open connection
+						}else{
+							// Send GET petition to get configuration data
+							// get_HTTP (address,host);
+							char update_script[]="/arduino/get/id/1/data/table=configuration;getallfields";
+							get_HTTP (update_script, config.ui_server);
+							getResponse();							// Pharse all data received and update if necessary
+							if (got_response) {
+								stopEthernet();
+								got_response = false;				// reset falg
+								received_data = false;				// Reset flag so its secure now that we already process every thing
+								#if defined DEBUG_serial
+								mem_check ();
+								#endif
+								break;
+							}else{
+								// if we havent got response, either the server is down or the response was not valid
+							}
+						}
+					}else{
+						// try to conect to the previous dns name recorded in Eeprom and retrieve IP
+						get_ip_from_dns_name(config.ui_server,server_ipAddr);
+					}
+					retries1++;
+				}
+				// Get back to start 
 				program_state = START;					// get back to start
 			break;}
 		}		
