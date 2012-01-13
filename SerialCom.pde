@@ -264,16 +264,16 @@ void send_data () {
 
 prog_uchar waitpcommand1[] PROGMEM  = {"Waiting command (C04)"};
 prog_uchar waitpcommand2[] PROGMEM  = {"Starting process print label "};
-prog_uchar waitpcommand3[] PROGMEM  = {"NOT *C04* or *C03* command: "};
+prog_uchar waitpcommand3[] PROGMEM  = {"NOT expected command: "};
 prog_uchar waitpcommand4[] PROGMEM  = {"Starting process fetch and send positions "};
+prog_uchar waitpcommand5[] PROGMEM  = {"Send error to the server "};
+prog_uchar waitpcommand6[] PROGMEM  = {"Send Action to the server"};
 
 int wait_for_print_command () {
 	// Waiting for a comand to be received (default print command 04) as we already configured printer.
-		
 	#if defined DEBUG_serial
 	mem_check ();
-	SerialFlashPrintln (waitpcommand1);
-	// Serial.println("Waiting command (C04)");
+	SerialFlashPrintln (waitpcommand1);			// Serial.println("Waiting command (C04)");
 	#endif
 	
 	boolean command_received = false;
@@ -283,27 +283,30 @@ int wait_for_print_command () {
 			send_command (1);
 			#if defined DEBUG_serial
 			SerialFlashPrintln (waitpcommand2);
-			// Serial.println ("Starting process print label ");
 			#endif
 			command_received = true;
 			return last_command_received;
-			
-		// necessary????
-		} else if (last_command_received == 03) {		// Petition to configure printer
-			send_command (1);
-			// get_configuration ();
-			// command_received = true;
-		} else if (last_command_received == 18) {		// Petition to configure printer
+		}else if (last_command_received == 03) {		// Petition to configure printer
 			send_command (1);
 			#if defined DEBUG_serial
 			SerialFlashPrintln (waitpcommand4);
 			#endif
 			return last_command_received;
+		}else if (last_command_received == 02) {		// Send Error to the server
+			send_command (1);
+			#if defined DEBUG_serial
+			SerialFlashPrintln (waitpcommand5);
+			#endif
+			return last_command_received;
+		}else if (last_command_received == 19) {		// Send Action to the server
+			send_command (1);
+			#if defined DEBUG_serial
+			SerialFlashPrintln (waitpcommand6);
+			#endif
+			return last_command_received;
 		} else {		// Not the command we are expecting, wait for the good comand
-			// send error, (not expected command); (E10)
 			#if defined DEBUG_serial
 			SerialFlashPrintln (waitpcommand3);
-			// Serial.print("NOT *C04* or *C03* command: ");
 			Serial.println(last_command_received);
 			#endif
 		}
@@ -342,31 +345,6 @@ void open_comunication_with_arduino () {
 	SerialFlashPrintln (open_comA2);
 	#endif
 }
-
-
-// TODO!!!!!!!!!!!!!!!!!!!!!!!!!
-/*
-
-	// Comand C03 happens when arduino mega wants us to get the configuration and pass him
-	// the positions information
-	
-	boolean command_received = false;
-	while (!command_received) {
-		int last_command_received = receiveNextValidCommand();
-		if (last_command_received == 03) {		// Petition to configure printer
-			
-			command_received = true;	// Send flag DNS received correctly and get out.
-		} else {		// Not the command we are expecting, wait for the good comand
-			send_command (2);	// indicates ther is an error
-			send_error (3);		// send error, Expected command (C03) (configure network)
-			#if defined DEBUG_serial
-			Serial.print("NOT *C03* command: ");
-			Serial.println(last_command_received);
-			#endif
-		}
-	}	
-	
-*/
 
 
 void receive_network_configuration () {

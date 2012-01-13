@@ -4,6 +4,9 @@
 *********************************************
 **  REVISIONS
 **
+**  V1.4.1 - 13/01/2012
+**  * Added send error and action functionalities
+**
 **  V1.4 - 12/01/2012
 **  * Added functionality to fetch all positions
 **  * Beginning proces of sending positions to arduino MEGA via serial interface

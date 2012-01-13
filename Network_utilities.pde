@@ -324,32 +324,6 @@ void getResponse(){
 	}
 }
 
-prog_uchar print_label1[] PROGMEM  = {"\nPrinter request sended!!"};
-
-/*
-void print_label () {
-	
-	client.print("GET /");
-	client.print(dataRec);
-	client.println(" HTTP/1.0");
-
-	client.print("Host: ");
-	client.print(ip_to_str(config.printer_IP));
-	client.print(":");
-	client.println(config.printer_port);
-	
-	Print_client ();
-	
-	client.println("");
-	
-	delay (100);
-	
-	#if defined DEBUG_serial
-	SerialFlashPrintln (print_label1);
-	//Serial.println("\nPrinter request sended!!");
-	#endif
-}*/
-
 prog_uchar stopEthernet1[] PROGMEM  = {"Stoping ethernet."};
 prog_uchar stopEthernet2[] PROGMEM  = {"Ethernet stoped."};
 
@@ -413,10 +387,6 @@ int freeRam () {
 // this DNS name is recorded in the Eeprom so we don't have to take it every time.
 // only if it changes
 
-
-
-
-
 /*
 get DNS name from arduino
 example: http://robot.eric.nr1net.corp
@@ -439,8 +409,7 @@ boolean fetch_configuration () {
 		if (got_ip) {
 			if (!done_it) {
 				#if defined DEBUG_serial
-				SerialFlashPrintln (fetchconfig1);
-				// Serial.println("IP of UI server retrieved!");
+				SerialFlashPrintln (fetchconfig1);	// Serial.println("IP of UI server retrieved!");	
 				#endif
 				#if defined NO_DNS
 				server_ipAddr[0]=95;
@@ -459,7 +428,6 @@ boolean fetch_configuration () {
 				connected = Ethernet_open_connection ();		// Try to open connection
 			}else{
 				// Send GET petition to get configuration data
-				// HTTP_get_config ();						// Send request to generate label
 				char update_script [] ="/arduino/get/id/1/data/table=configuration;getallfields";
 				get_HTTP (update_script, config.ui_server);
 				getResponse();							// Pharse all data received and update if necessary
@@ -483,174 +451,7 @@ boolean fetch_configuration () {
 		retries1++;
 	}
 	return false;
-	
-	//now we can get the conficuration
-	//TODO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  
-	/*
-	// Prepare to receive all configuration data
-	boolean SA = false;		// server_address (host name)
-	boolean SS = false;		// server_script (Host Address)
-	boolean IP = false;		// printer_IP
-	boolean PS = false;		// password
-	boolean PP = false;		// printer port
-	boolean SB = false;		// seeds batch
-	
-	#if defined DEBUG_serial
-	mem_check ();			// Check free memory
-	Serial.println("Enter configuration "); 
-	#endif
-	// Test configuration
-	
-	//SA: office.pygmalion.nl
-	//SS: /labelgenerator/generate.php?batch_id=290
-	//IP: 10.10.249.105
-	//PS: ***********************
-	//PP: 8000
-	//SA || !SS || !IP || !PS || !PP
-	//if (false) {		// just for testing...
-	//	SA = true;
-	//	SS = true;
-	//	IP = true;
-	//	PS = true;
-	//	PP = true;
-	//	SB = true;
-	//}
-	
-	// Check if we finished configuring
-	while (!SA || !SS || !IP || !PS || !PP || !SB)  {
-		#if defined DEBUG_serial
-		Serial.println("Ready to receive Command "); 
-		#endif
-		
-		//C07 - Send SA (server_address)
-		//C08 - Send SS (server_script)
-		//C09 - Send SB (seeds_batch)
-		//C10 - Send IP (printer_IP)
-		//C11 - Send PS (password)
-		//C12 - Send PP (printer_port)
-		
-		int last_command_received = receiveNextValidCommand();
-		switch (last_command_received) { 
-			case 7:
-				recevie_data (hostName,bufferShort);
-				SA = true;
-				//Serial.print ("-7-");
-			break;
-			
-			case 8:
-				recevie_data (hostAddress,buffer);
-				SS = true;
-				//Serial.print ("-8-");
-			break;
-			
-			case 9:
-				recevie_data (seeds_batch,buffer_batch);
-				SB = true;
-				//Serial.print ("-9-");
-			break;
-			
-			case 10:		// Printer IP
-				receive_printer_IP ();
-				IP = true;
-				//Serial.print ("-10-");
-			break;
-			
-			case 11:
-				recevie_data (password,bufferShort);
-				PS = true;
-				//Serial.print ("-11-");
-			break;
-			
-			case 12:
-				receive_printer_port ();
-				PP = true;
-				//Serial.print ("-12-");
-			break;
-			
-			default:
-				// something went WRONG
-				#if defined DEBUG_serial
-				Serial.print("something went WRONG: "); 
-				Serial.println(last_command_received);
-				#endif
-				send_command (2);	// send error
-				send_error (4);		// Error 4 Configuration command not supported
-			break;
-		}	
-	}
-	
-	send_command (1);		// To indicate we configured correctly
-	
-	//#if defined DEBUG_serial
-	Serial.println ("");
-	Serial.print ("SA: ");
-	Serial.println (hostName);
-	Serial.print ("SS: ");
-	Serial.println (hostAddress);
-	Serial.print ("IP: ");
-	Serial.println (ip_to_str(printer_ipAddr));
-	Serial.print ("PS: ");
-	Serial.println (password);
-	Serial.print ("PP: ");
-	Serial.println (printer_port);
-	Serial.print ("SB: ");
-	Serial.println (seeds_batch);
-	//#endif */
-	return true;
 }
-
-
-// retrieve all configuration
-// script to do that: /arduino/get/id/1/data/table=configuration;getallfields
-
-// What configuration do we need to get from the server?
-
-	// Info that stays in this arduino
-	//C07 - Send SA (server_address)
-	//C08 - Send SS (server_script)
-	//C09 - Send SB (seeds_batch)
-	//C10 - Send IP (printer_IP)
-	//C11 - Send PS (password)
-	//C12 - Send PP (printer_port)
-	
-	// check if we have to update this info from the eeprom
-	
-	
-	// Info that is passed onto arduino mega
-	
-	// ALL positions
-
-	/*
-void HTTP_get_config () {
-
-	client.print("GET /arduino/get/id/1/data/table=configuration;getallfields");
-	client.println(" HTTP/1.0");
-	
-	client.print("Host: ");
-	client.println(config.ui_server);
-	
-	Print_client ();
-	
-	client.println();
-	delay (100);
-}*/
-
-/*
-void HTTP_get_positions () {
-
-	client.print("GET /arduino/get/id/1/data/table=configuration;getallfields");
-	client.println(" HTTP/1.0");
-	
-	client.print("Host: ");
-	client.println(config.ui_server);
-	
-	Print_client ();
-	
-	client.println();
-	delay (100);
-}*/
-
-
 
 void get_HTTP (char* address,char* host) {
 
@@ -706,12 +507,81 @@ void generate_label () {
 	delay (100);
 }
 
-boolean is_UI_server_alive () {
-	// get DNS name from arduino
-	boolean SA = false;		// server_address (host name)
-	while (!SA)  {
-		SA = true;
-	}
-	return true;
+void POST_data_UI_server (char* address,char* host, unsigned int data) {
+
+	client.print("GET ");
+	client.print(address);
+	client.print(data);
+	client.println(" HTTP/1.0");
+	
+	client.print("Host: ");
+	client.println(host);
+	
+	client.print("User-Agent: Arduino SeedCounter Client ");
+	client.println(_version);
+	
+	client.println();
+	delay (100);
 }
 
+void send_data_UI_server (int data_type, int data) {
+	
+	// Data Types
+	//#define data_error 1
+	//#define data_action 2
+	
+	boolean done_it = false;
+	byte retries1 = 0;
+	while (retries1 < 10) {
+		#if defined NO_DNS
+		got_ip = true;
+		#endif
+		if (got_ip) {
+			if (!done_it) {
+				#if defined NO_DNS
+				server_ipAddr[0]=95;
+				server_ipAddr[1]=211;
+				server_ipAddr[2]=54;
+				server_ipAddr[3]=66;
+				set_server_ip(server_ipAddr);		// Refresh the IP addres to connect to
+				#else
+				set_server_ip(server_ipAddr);		// Refresh the IP addres to connect to
+				#endif
+				set_server_port(80);				// Change back the port to the default
+				done_it = true;
+			}
+			
+			if (!connected) {	// open connection and send petition of all configuration data (exclude positions)
+				connected = Ethernet_open_connection ();		// Try to open connection
+			}else{
+				// Send POST with DATA INFORMATION 
+				if (data_type == data_action) {
+					char update_script[]="/arduino/get/id/1/data/action=";
+					POST_data_UI_server (update_script,config.ui_server, data);
+				}else if (data_type == data_error) {
+					char update_script[]="/arduino/get/id/1/data/error=";
+					POST_data_UI_server (update_script,config.ui_server, data);
+				}
+				
+				
+				// needed?????
+				/*
+				getResponse();							// Pharse all data received and update if necessary
+				if (got_response) {
+					stopEthernet();
+					got_response = false;				// reset falg
+					received_data = false;				// Reset flag so its secure now that we already process every thing
+					#if defined DEBUG_serial
+					mem_check ();
+					#endif
+					break;
+				}else{
+					// if we havent got response, either the server is down or the response was not valid
+				}*/
+			}
+		}else{		// try to conect to the previous dns name recorded in Eeprom and retrieve IP
+			get_ip_from_dns_name(config.ui_server,server_ipAddr);
+		}
+		retries1++;
+	}
+}

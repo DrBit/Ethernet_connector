@@ -10,7 +10,7 @@
 
 #define ID             1    //incase you have more than 1 unit on same network, just change the unit ID to other number
 
-#define _version "V1.4"
+#define _version "V1.4.1"
 
 ///////////////////////
 // NETWORK UTILITIES
@@ -44,7 +44,6 @@ const char* myTagStrings[numberOfTags]={
 	"<response>"
 };   // Array of tags
 
-
 // Keep non configuration tags at the end of the chain (like response)
 byte LastTagNumber = 0;			// Container where we store last found tag
 byte LastPosTagNumber = 0;		// Container where we sotre last found position tag
@@ -58,7 +57,9 @@ boolean inici = true;
 boolean got_match = false;
 
 
-// Records of the DB
+///////////////////////
+// STRUCTURE FOR DATA BASE
+///////////////////////
 struct MyRec {
 	// Containig
 	char server_address[25];		// example: office.pygmalion.nl
@@ -71,6 +72,7 @@ struct MyRec {
 	//byte numberOfPostitions;		// example: 20
 } config;
 // When changing the structure data in the eeprom needs to be rewritten
+
 
 ////////////////////////
 // NETWORK VARs & DEFINES
@@ -89,7 +91,6 @@ byte server_ipAddr [4] = {
   0,0,0,0					// Dummy
 };
 
-
 #if defined(ARDUINO) && ARDUINO >= 100
 EthernetClient client;
 #else
@@ -99,8 +100,17 @@ Client client(server_ipAddr, 80);
 // Function to format IP and print it in serial com.
 const char* ip_to_str(const uint8_t*);		// Format IP address
 
+// Flags
+boolean received_data = false;
+boolean got_ip = false;
+boolean connected = false;
+boolean got_response = false;
 
-// Setup
+
+///////////////////////
+// SETUP
+///////////////////////
+
 void setup()
 {
 	Serial.begin(9600);
@@ -115,18 +125,20 @@ void setup()
 }
 
 
-// Flags
-boolean received_data = false;
-boolean got_ip = false;
-boolean connected = false;
-boolean got_response = false;
- 
 // Program states
 #define CONFIGURE 1
 #define START 2
 #define GET_LABEL 3
 #define PRINT_LABEL 4
 #define UPDATE_POSITIONS 5
+#define SEND_ACTION 6
+#define SEND_ERROR 7
+
+// Data Types
+#define data_error 1
+#define data_action 2
+
+
 byte program_state = CONFIGURE; 
 byte last_program_state = 0;
 
@@ -134,7 +146,6 @@ byte last_program_state = 0;
 byte retries = 0;
 
 // TEXT srtrings
-
 prog_uchar loop1[] PROGMEM  = {"Too much retries."};
 prog_uchar loop2[] PROGMEM  = {"Set IP/port to pygmalion."};
 prog_uchar loop3[] PROGMEM  = {"Set IP/port to printer"};
@@ -144,11 +155,16 @@ prog_uchar loop6[] PROGMEM  = {""};
 prog_uchar loop7[] PROGMEM  = {""};
 
 
+///////////////////////
+// LOOP
+///////////////////////
+
 // Main loop
 void loop()
 {
 	// Check if we have to renew the DHCP lease with the gateway or obtain an IP if starting
 	int dhcp_state = Ethernet_mantain_connection();
+	Serial.println ("maintain connection");
 	
 	if (dhcp_state == 1) {				// if we have obtained an IP address..
 		switch (program_state) { 
@@ -156,7 +172,6 @@ void loop()
 			case CONFIGURE:	{
 				#if defined DEBUG_serial
 				SerialFlashPrintln (loop4);
-				// Serial.println ("too much retries");
 				#endif
 				if (!fetch_configuration ()) {		// if configuration fails might be DNS name is wrong
 					// (only once)
@@ -168,35 +183,40 @@ void loop()
 						//send error
 						#if defined DEBUG_serial
 						mem_check ();
-						SerialFlashPrintln (loop1);
-						// Serial.println ("too much retries");
+						SerialFlashPrintln (loop1);		// Serial.println ("too much retries");
 						#endif
-						program_state = START;	// Or in this case send an error and halt
+						program_state = START;			// Or in this case send an error and halt
 					}
 				}else{
-					send_command (1);		// Send confirmation that module has been configured correctly
+					send_command (1);					// Send confirmation that module has been configured correctly
 					program_state = START;
-					Show_all_records();		// For debug only
+					#if defined DEBUG_serial
+					Show_all_records();					// For debug only
+					#endif
 				}
 			break; }
 			
 			case START: {
+				// Wait until the new order is received
 				byte next_order = wait_for_print_command ();
 				if (next_order == 4) {
-					program_state = GET_LABEL;			// Wait until the counter sends us the command to print a label
+					program_state = GET_LABEL;			// Command to print a label
 				}
-				if (next_order == 18) { 
-					program_state = UPDATE_POSITIONS;		// Wait until the counter sends us the command to print a label
+				if (next_order == 3) { 
+					program_state = UPDATE_POSITIONS;	// Command to update all positions
 				}
-				// program_state = GET_LABEL;
-				// here comes update positions for mega
+				if (next_order == 19) { 
+					program_state = SEND_ACTION;		// Command to send action to the server
+				}
+				if (next_order == 2) { 
+					program_state = SEND_ERROR;			// Command to send error to the server
+				}
 			break;}
 			
 			case GET_LABEL: {
 				if (got_ip) {							// If we havent resolved an IP we have to resolve it first
 					#if defined DEBUG_serial
-					SerialFlashPrintln (loop2);
-					// Serial.println("Set IP/port to pygmalion");
+					SerialFlashPrintln (loop2);			// Serial.println("Set IP/port to pygmalion");
 					#endif
 					set_server_ip(server_ipAddr);		// Refresh the IP addres to connect to
 					set_server_port(80);				// Change back the port to the default
@@ -222,8 +242,7 @@ void loop()
 						//send error
 						#if defined DEBUG_serial
 						mem_check ();
-						SerialFlashPrintln (loop1);
-						//Serial.println ("too much retries");
+						SerialFlashPrintln (loop1);				//Serial.println ("too much retries");
 						#endif
 						program_state = START;
 					}
@@ -233,22 +252,20 @@ void loop()
 			
 			case PRINT_LABEL:{
 				#if defined DEBUG_serial
-				SerialFlashPrintln (loop3);
-				// Serial.println("Set IP/port to printer");
+				SerialFlashPrintln (loop3);						// Serial.println("Set IP/port to printer");
 				#endif
-				set_server_ip(config.printer_IP);			// Change IP to the next client
+				set_server_ip(config.printer_IP);				// Change IP to the next client
 				set_server_port(config.printer_port);			// Change port to the next client
 				
 				if (!connected) {
 					connected = Ethernet_open_connection ();
 				}else {  // Open connection
-					sprintf(dataRec, "/%s",dataRec);		// Add missing sing before the string
+					sprintf(dataRec, "/%s",dataRec);			// Add missing sign before the string
 					char temporal_ip [15];
-					sprintf(temporal_ip, ip_to_str(config.printer_IP));
-					get_HTTP (dataRec, temporal_ip, config.printer_port);
-					// print_label ();							// Send request to print the label
-					send_command (06);						// Completed successfully
-					program_state = START;					// Goes to the start 
+					sprintf(temporal_ip, ip_to_str(config.printer_IP));			// create char string with IP
+					get_HTTP (dataRec, temporal_ip, config.printer_port);		// OLD print_label ();							
+					send_command (06);							// Completed successfully
+					program_state = START;						// Goes to the start 
 					stopEthernet();
 				}
 			break;}
@@ -282,7 +299,6 @@ void loop()
 							connected = Ethernet_open_connection ();		// Try to open connection
 						}else{
 							// Send GET petition to get configuration data
-							// get_HTTP (address,host);
 							char update_script[]="/arduino/get/id/1/data/table=configuration;getallfields";
 							get_HTTP (update_script, config.ui_server);
 							getResponse();							// Pharse all data received and update if necessary
@@ -298,16 +314,24 @@ void loop()
 								// if we havent got response, either the server is down or the response was not valid
 							}
 						}
-					}else{
-						// try to conect to the previous dns name recorded in Eeprom and retrieve IP
+					}else{		// try to conect to the previous dns name recorded in Eeprom and retrieve IP
 						get_ip_from_dns_name(config.ui_server,server_ipAddr);
 					}
 					retries1++;
 				}
-				// Get back to start 
 				program_state = START;					// get back to start
 			break;}
-		}		
+			
+			case SEND_ACTION:{
+				// receive action from arduino mega
+				send_data_UI_server (data_action,1);				// send action to server
+			break;}
+			
+			case SEND_ERROR:{
+				// receive error from arduino mega
+				send_data_UI_server (data_error,1);				// send error to server
+			break;}
+		}
 	}else{
 		// We are obtaining or renewing a DHCp lease, if we wait too much means error...
 		// implement error
@@ -322,58 +346,3 @@ void loop()
 		retries ++;
 	}
 }
-
-
-		/*mem_check ();
-		wait_for_print_command ();		// Wait until the counter sends us the command to print a label
-		if (got_ip) {					// If we get IP from the name
-			if (connection_case == generateLabel) {
-				#if defined DEBUG_serial
-				Serial.println("Set IP and port to pygmalion server");
-				#endif
-				set_server_ip(server_ipAddr);		// Refresh the IP addres to connect to
-				set_server_port(80);					// Change back the port to the default
-			}else{
-				if (!connected) {
-					#if defined DEBUG_serial
-					Serial.println("Set IP and port to printer host");
-					#endif
-					set_server_ip(printer_ipAddr);			// Change IP to the next client
-					set_server_port(printer_port);			// Change port to the next client
-				}
-			}
-			if (!executed) {									// If we didn got an answedr from the server yet
-				if (!connected) {
-					connected = Ethernet_open_connection ();
-				}else if (connected) {  // Open connection
-					// We have an oppen connection with the server so we send our requests
-					if (connection_case == generateLabel) {
-						generate_label ();						// Send request to generate label
-						getResponse();							// get and processe response
-						if (got_response) {
-							connection_case = printLabel;		// Change the mode so next time we have a connection we will print
-							stopEthernet();
-							got_response = false;
-							#if defined DEBUG_serial
-							mem_check ();
-							#endif
-							received_data = false;				// Reset flag so its secure now that we already process every thing
-						}
-					}else if (connection_case == printLabel) {
-						print_label ();							// Send request to print the label
-						send_command (06);						// Completed successfully
-						connection_case = generateLabel;
-						executed = true;		// Means we did all the process so we need to stop and wait again
-						print_state = ready;	// Means we will request the server another print comand
-						stopEthernet();
-					}
-				}
-			}
-		}else{
-			// If we havent resolved an IP so we have to resolve it first
-			if (connection_case == generateLabel) {		// When generate label we connect trough a host name so we need the IP
-				get_ip_from_dns_name();		// Asks for a host and gets the IP addres trough DNS
-			}else{
-				got_ip = true;				// because the IP of the printer we already took it from the previous configuration
-			}
-		}*/
