@@ -10,7 +10,7 @@
 
 #define ID             1    //incase you have more than 1 unit on same network, just change the unit ID to other number
 
-#define _version "V1.4.1"
+#define _version "V1.4.2"
 
 ///////////////////////
 // NETWORK UTILITIES
@@ -164,7 +164,7 @@ void loop()
 {
 	// Check if we have to renew the DHCP lease with the gateway or obtain an IP if starting
 	int dhcp_state = Ethernet_mantain_connection();
-	Serial.println ("maintain connection");
+	// Serial.println ("maintain connection");
 	
 	if (dhcp_state == 1) {				// if we have obtained an IP address..
 		switch (program_state) { 
@@ -251,12 +251,13 @@ void loop()
 			break;}
 			
 			case PRINT_LABEL:{
+		
 				#if defined DEBUG_serial
 				SerialFlashPrintln (loop3);						// Serial.println("Set IP/port to printer");
 				#endif
 				set_server_ip(config.printer_IP);				// Change IP to the next client
 				set_server_port(config.printer_port);			// Change port to the next client
-				
+
 				if (!connected) {
 					connected = Ethernet_open_connection ();
 				}else {  // Open connection
@@ -319,17 +320,21 @@ void loop()
 					}
 					retries1++;
 				}
-				program_state = START;					// get back to start
+				program_state = START;								// get back to start
 			break;}
 			
 			case SEND_ACTION:{
+				// to implement
 				// receive action from arduino mega
 				send_data_UI_server (data_action,1);				// send action to server
+				program_state = START;								// get back to start
 			break;}
 			
 			case SEND_ERROR:{
+				// to implement	
 				// receive error from arduino mega
-				send_data_UI_server (data_error,1);				// send error to server
+				send_data_UI_server (data_error,1);					// send error to server
+				program_state = START;								// get back to start
 			break;}
 		}
 	}else{

@@ -555,14 +555,20 @@ void send_data_UI_server (int data_type, int data) {
 				connected = Ethernet_open_connection ();		// Try to open connection
 			}else{
 				// Send POST with DATA INFORMATION 
+				// example from eric: /arduino/set/id/1/data/table=statistics:full_batchcode=8293847592837;batchcode=475;id_action=1;id_error=1;id_status=1;extra_info=helloworld
 				if (data_type == data_action) {
-					char update_script[]="/arduino/get/id/1/data/action=";
+					char update_script[]="/arduino/set/id/1/data/table=statistics:id_action=";
 					POST_data_UI_server (update_script,config.ui_server, data);
 				}else if (data_type == data_error) {
-					char update_script[]="/arduino/get/id/1/data/error=";
+					char update_script[]="/arduino/set/id/1/data/table=statistics:id_error=";
 					POST_data_UI_server (update_script,config.ui_server, data);
 				}
+				// Is there any answer from the server qe can check to very its been sucess?
 				
+				print_response();		// Prints response in order to clean de buffer, also prints for debug if enabled
+				stopEthernet();
+				resetState ();
+				break;
 				
 				// needed?????
 				/*
@@ -574,7 +580,7 @@ void send_data_UI_server (int data_type, int data) {
 					#if defined DEBUG_serial
 					mem_check ();
 					#endif
-					break;
+					
 				}else{
 					// if we havent got response, either the server is down or the response was not valid
 				}*/
@@ -583,5 +589,49 @@ void send_data_UI_server (int data_type, int data) {
 			get_ip_from_dns_name(config.ui_server,server_ipAddr);
 		}
 		retries1++;
+	}
+}
+
+
+
+prog_uchar presponse1[] PROGMEM  = {"waiting for response."};
+prog_uchar presponse2[] PROGMEM  = {"\nTime Out!"};
+prog_uchar presponse3[] PROGMEM  = {"\nserver closed session."};
+
+void print_response(){  
+	#if defined DEBUG_serial
+	SerialFlashPrint (presponse1);
+	#endif
+	unsigned int timeoutCounter = 0;
+	while (!client.available()) {		// Wait for the client to be available
+		#if defined DEBUG_serial
+		Serial.print(".");
+		#endif
+		delay (200);
+		timeoutCounter ++;
+		if (timeoutCounter > (15000/200)) {		// If greater than 15 seconds
+			#if defined DEBUG_serial
+			SerialFlashPrintln (presponse2);
+			#endif
+			send_command (00);			// Indicates function was not completed 
+			send_error (01);			// Indicates the error type generateds
+			// resetState ();				// Resets all variables in order to get to the beginin of the code.
+			break;
+		}
+	}
+	#if defined DEBUG_serial
+	Serial.println(".");
+	#endif
+	while (client.available()) {
+		char a = client.read ();
+		#if defined DEBUG_serial
+		Serial.print (a);
+		#endif
+	}
+
+	if (!client.connected()) {			// if the server's disconnected, stop the client:
+		#if defined DEBUG_serial
+		SerialFlashPrintln (presponse3);
+		#endif
 	}
 }
