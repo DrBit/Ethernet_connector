@@ -428,7 +428,7 @@ boolean fetch_configuration () {
 				connected = Ethernet_open_connection ();		// Try to open connection
 			}else{
 				// Send GET petition to get configuration data
-				char update_script [] ="/arduino/get/id/1/data/table=configuration;getallfields";
+				char update_script [] ="/arduino/get/id/1/data/table=configuration;getallconfig";
 				get_HTTP (update_script, config.ui_server);
 				getResponse();							// Pharse all data received and update if necessary
 				if (got_response) {
@@ -555,12 +555,15 @@ void send_data_UI_server (int data_type, int data) {
 				connected = Ethernet_open_connection ();		// Try to open connection
 			}else{
 				// Send POST with DATA INFORMATION 
-				// example from eric: /arduino/set/id/1/data/table=statistics:full_batchcode=8293847592837;batchcode=475;id_action=1;id_error=1;id_status=1;extra_info=helloworld
+				
 				if (data_type == data_action) {
-					char update_script[]="/arduino/set/id/1/data/table=statistics:id_action=";
+					char update_script[]="/arduino/set/id/1/data/table=status;current_action=";
 					POST_data_UI_server (update_script,config.ui_server, data);
 				}else if (data_type == data_error) {
-					char update_script[]="/arduino/set/id/1/data/table=statistics:id_error=";
+					char update_script[]="/arduino/set/id/1/data/table=status;error=";
+					POST_data_UI_server (update_script,config.ui_server, data);
+				}else if (data_type == data_status) {
+					char update_script[]="/arduino/set/id/1/data/table=status;running=";
 					POST_data_UI_server (update_script,config.ui_server, data);
 				}
 				// Is there any answer from the server qe can check to very its been sucess?

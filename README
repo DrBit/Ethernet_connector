@@ -4,6 +4,10 @@
 *********************************************
 **  REVISIONS
 **
+**  V1.4.3 - 18/01/2012
+**  * Corrected URLs for getting config,positions and setting status,action and error
+**  * Simplified Fucntion for getting main commands
+**
 **  V1.4.2 - 16/01/2012
 **  * Fixed bug in send_action and send_error functions procedure
 **

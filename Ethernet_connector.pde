@@ -10,7 +10,7 @@
 
 #define ID             1    //incase you have more than 1 unit on same network, just change the unit ID to other number
 
-#define _version "V1.4.2"
+#define _version "V1.4.3"
 
 ///////////////////////
 // NETWORK UTILITIES
@@ -133,10 +133,12 @@ void setup()
 #define UPDATE_POSITIONS 5
 #define SEND_ACTION 6
 #define SEND_ERROR 7
+#define SEND_STATUS 8
 
 // Data Types
 #define data_error 1
 #define data_action 2
+#define data_status 3
 
 
 byte program_state = CONFIGURE; 
@@ -200,17 +202,25 @@ void loop()
 				// Wait until the new order is received
 				byte next_order = wait_for_print_command ();
 				if (next_order == 4) {
+					send_command (1);
 					program_state = GET_LABEL;			// Command to print a label
-				}
-				if (next_order == 3) { 
+				}else if (next_order == 3) { 
+					send_command (1);
 					program_state = UPDATE_POSITIONS;	// Command to update all positions
-				}
-				if (next_order == 19) { 
+				}else if (next_order == 19) { 
+					send_command (1);
 					program_state = SEND_ACTION;		// Command to send action to the server
-				}
-				if (next_order == 2) { 
+				}else if (next_order == 2) { 
+					send_command (1);
 					program_state = SEND_ERROR;			// Command to send error to the server
+				}else if (next_order == 20) { 
+					send_command (1);
+					program_state = SEND_STATUS;		// Command to send error to the server
+				}else{
+					// If we reach here means we dont recognize the order.
 				}
+				
+				
 			break;}
 			
 			case GET_LABEL: {
@@ -300,7 +310,7 @@ void loop()
 							connected = Ethernet_open_connection ();		// Try to open connection
 						}else{
 							// Send GET petition to get configuration data
-							char update_script[]="/arduino/get/id/1/data/table=configuration;getallfields";
+							char update_script[]="/arduino/get/id/1/data/table=configuration;getpositions";
 							get_HTTP (update_script, config.ui_server);
 							getResponse();							// Pharse all data received and update if necessary
 							if (got_response) {
@@ -324,16 +334,20 @@ void loop()
 			break;}
 			
 			case SEND_ACTION:{
-				// to implement
-				// receive action from arduino mega
-				send_data_UI_server (data_action,1);				// send action to server
+				byte action_number = wait_for_print_command ();
+				send_data_UI_server (data_action,action_number);	// send action to server
 				program_state = START;								// get back to start
 			break;}
 			
 			case SEND_ERROR:{
-				// to implement	
-				// receive error from arduino mega
-				send_data_UI_server (data_error,1);					// send error to server
+				byte error_number = wait_for_print_command ();
+				send_data_UI_server (data_error,error_number);		// send error to server
+				program_state = START;								// get back to start
+			break;}
+			
+			case SEND_STATUS:{	
+				byte status_number = wait_for_print_command ();
+				send_data_UI_server (data_status,status_number);	// send error to server
 				program_state = START;								// get back to start
 			break;}
 		}
