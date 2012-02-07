@@ -1,7 +1,7 @@
-
 #if defined(ARDUINO) && ARDUINO > 18
 #include <SPI.h>
 #endif
+
 #include <Ethernet.h>
 #include <EthernetDHCP.h>
 #include <EthernetDNS.h>
@@ -9,7 +9,7 @@
 
 #define ID             1    //incase you have more than 1 unit on same network, just change the unit ID to other number
 
-#define _version "V1.0"
+#define _version "V1.1"
 
 ///////////////////////
 // NETWORK UTILITIES
@@ -92,8 +92,12 @@ byte printer_ipAddr [4] = {
 
 
 
-
+#if defined(ARDUINO) && ARDUINO >= 100
+EthernetClient client;
+#else
 Client client(server_ipAddr, 80);
+#endif
+
 
 const char* ip_to_str(const uint8_t*);		// Format IP address
 
@@ -134,15 +138,15 @@ void loop()
 				#if defined DEBUG_serial
 				Serial.println("Set IP and port to pygmalion server");
 				#endif
-				client.server_ip(server_ipAddr);		// Refresh the IP addres to connect to
-				client.server_port(80);					// Change back the port to the default
+				set_server_ip(server_ipAddr);		// Refresh the IP addres to connect to
+				set_server_port(80);					// Change back the port to the default
 			}else{
 				if (!connected) {
 					#if defined DEBUG_serial
 					Serial.println("Set IP and port to printer host");
 					#endif
-					client.server_ip(printer_ipAddr);			// Change IP to the next client
-					client.server_port(printer_port);			// Change port to the next client
+					set_server_ip(printer_ipAddr);			// Change IP to the next client
+					set_server_port(printer_port);			// Change port to the next client
 				}
 			}
 			if (!executed) {									// If we didn got an answedr from the server yet
