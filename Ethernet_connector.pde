@@ -56,9 +56,9 @@ const int buffer_command = 3;
 const int buffer_batch = 4;
 const int buffer = 48;
 const int bufferShort = 31;
-char hostName[bufferShort]= "office.pygmalion.nl";
-char hostAddress[buffer] = "/labelgenerator/generate.php?batch_id=";
-char password[bufferShort] = "YXJkdWlubzpQQXBhWXViQTMzd3I=";
+char hostName[bufferShort]= "a";
+char hostAddress[buffer] = "a";
+char password[bufferShort] = "a";
 uint16_t printer_port = 8000;
 char seeds_batch[buffer_batch] = "600";
 
