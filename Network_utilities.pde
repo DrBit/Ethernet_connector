@@ -194,7 +194,8 @@ boolean Ethernet_open_connection () {
 	Serial.println("connecting to the server");
 	delay (100);
 	#endif
-	if (client.connect(_ip,_port)) {
+	//if (client.connect(_ip,_port)) {		// FOR UNO COMPATIBILITY
+	if (client.connect()) {
 		#if defined DEBUG_serial
 		Serial.println("connected");
 		#endif
