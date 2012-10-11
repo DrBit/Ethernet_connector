@@ -52,8 +52,8 @@ boolean got_match = false;
 // NETWORK VARs & DEFINES
 ////////////////////////
 
-const int buffer_command = 5;
-const int buffer_batch = 4;
+const int buffer_command = 4;
+const int buffer_batch = 6;
 const int buffer = 48;
 const int bufferShort = 31;
 char hostName[bufferShort]= "a";
