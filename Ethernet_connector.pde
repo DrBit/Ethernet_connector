@@ -60,7 +60,7 @@ char hostName[bufferShort]= "a";
 char hostAddress[buffer] = "a";
 char password[bufferShort] = "a";
 uint16_t printer_port = 8000;
-char seeds_batch[buffer_batch] = "600";
+char seeds_batch[buffer_batch] = "60000";
 
 boolean print_state = 0;
 #define ready 0

@@ -4,6 +4,9 @@
 *********************************************
 **  REVISIONS
 **
+**  V1.1 - 10/11/2012
+**  * Fixed bug in debug mode (would go out of memory)
+**
 **  V1.0 - 18/10/2011
 **  * READY for production
 **
