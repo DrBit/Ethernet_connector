@@ -272,8 +272,8 @@ void wait_for_print_command () {
 	if (print_state == ready) {
 		
 		#if defined DEBUG_serial
-		Serial.println("Network ready!"); 
-		Serial.println("Waiting for print label command (C04)");
+		//Serial.println("Network ready!"); 
+		Serial.println("Waiting command (C04)");
 		#endif
 		
 		boolean command_received = false;
@@ -282,7 +282,7 @@ void wait_for_print_command () {
 			if (last_command_received == 04) {				// Petition of configuration all correct.
 				send_command (1);
 				#if defined DEBUG_serial
-				Serial.println ("Starting process print label ");
+				Serial.println ("print label");
 				#endif
 				command_received = true;
 				print_state = printing;
@@ -294,7 +294,7 @@ void wait_for_print_command () {
 			} else {		// Not the command we are expecting, wait for the good comand
 				// send error, (not expected command); (E10)
 				#if defined DEBUG_serial
-				Serial.print("NOT *C04* or *C03* command: ");
+				Serial.print("NOT C04 C03:");
 				Serial.println(last_command_received);
 				#endif
 			}
@@ -321,7 +321,7 @@ void indicate_we_are_ready () {
 			send_command (2);	// indicates ther is an error
 			send_error (3);		// send error, Expected command (C03) (configure network)
 			#if defined DEBUG_serial
-			Serial.print("NOT *C03* command: ");
+			Serial.print("NOT C03:");
 			Serial.println(last_command_received);
 			#endif
 		}
@@ -362,7 +362,7 @@ void get_configuration () {
 	// Check if we finished configuring
 	while (!SA || !SS || !IP || !PS || !PP || !SB)  {
 		#if defined DEBUG_serial
-		Serial.println("Ready to receive Command "); 
+		//Serial.println("Ready to receive Command "); 
 		#endif
 		/* 
 		C07 - Send SA (server_address)
@@ -426,17 +426,17 @@ void get_configuration () {
 	
 	//#if defined DEBUG_serial
 	Serial.println ("");
-	Serial.print ("SA: ");
+	Serial.print ("SA:");
 	Serial.println (hostName);
-	Serial.print ("SS: ");
+	Serial.print ("SS:");
 	Serial.println (hostAddress);
-	Serial.print ("IP: ");
+	Serial.print ("IP:");
 	Serial.println (ip_to_str(printer_ipAddr));
-	Serial.print ("PS: ");
+	Serial.print ("PS:");
 	Serial.println (password);
-	Serial.print ("PP: ");
+	Serial.print ("PP:");
 	Serial.println (printer_port);
-	Serial.print ("SB: ");
+	Serial.print ("SB:");
 	Serial.println (seeds_batch);
 	//#endif
 }

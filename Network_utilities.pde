@@ -241,8 +241,8 @@ void generate_label () {
 	client.print("Host: ");
 	client.println(hostName);
 	
-	client.print("User-Agent: Arduino SeedCounter Client ");
-	client.println(_version);
+	//client.print("User-Agent: Arduino SeedCounter Client ");
+	//client.println(_version);
 	
 	client.println();
 	delay (100);
@@ -251,7 +251,7 @@ void generate_label () {
 
 void getResponse(){  
 	#if defined DEBUG_serial
-	Serial.print("waiting for response.");
+	Serial.print("waiting response.");
 	#endif
 	unsigned int timeoutCounter = 0;
 	while (!client.available()) {
@@ -309,8 +309,8 @@ void print_label () {
 	client.print(":");
 	client.println(printer_port);
 	
-	client.print("User-Agent: Arduino SeedCounter Client ");
-	client.println(_version);
+	//client.print("User-Agent: Arduino SeedCounter Client ");
+	//client.println(_version);
 	
 	client.println("");
 	

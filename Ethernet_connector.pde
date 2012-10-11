@@ -15,7 +15,7 @@
 // NETWORK UTILITIES
 ///////////////////////
 
-// #define DEBUG_serial
+#define DEBUG_serial
 
 // #if defined DEBUG
 // Serial.println(val);
